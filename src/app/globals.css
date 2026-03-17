@@ -1,26 +1,215 @@
 @import "tailwindcss";
+@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600&display=swap');
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
+@theme {
+  /* Primary — Deep forest green from logo */
+  --color-primary: #1D3C34;
+  --color-primary-light: #2A5246;
+  --color-primary-dark: #142B25;
+  /* Accent — Warm gold from logo */
+  --color-accent: #B89B5E;
+  --color-accent-light: #D4BA82;
+  --color-accent-dark: #9A7F45;
+  /* Secondary — Olive/sage from logo elements */
+  --color-secondary: #8B7E5A;
+  --color-secondary-light: #A89B75;
+  --color-secondary-dark: #6E6443;
+  /* Copper — From logo foundation bar */
+  --color-copper: #C69C5D;
+  --color-copper-light: #D8B57E;
+  --color-copper-dark: #A87E42;
+  /* Sand/Khaki — From logo triangle */
+  --color-sand: #C8B88A;
+  --color-sand-light: #DDD1AD;
+  --color-sand-dark: #B0A06E;
+  /* Surfaces */
+  --color-surface: #F7F5F0;
+  --color-surface-dark: #142B25;
+  --color-surface-card: #FFFFFF;
+  --color-surface-warm: #F2EDE3;
+  /* Text */
+  --color-text-primary: #1D3C34;
+  --color-text-secondary: #4A5C52;
+  --color-text-light: #F7F5F0;
+  /* Fonts */
+  --font-heading: 'Playfair Display', serif;
+  --font-body: 'Inter', sans-serif;
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+/* Base styles */
+html {
+  scroll-behavior: smooth;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-body);
+  color: var(--color-text-primary);
+  background-color: var(--color-surface);
 }
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  font-family: var(--font-heading);
+}
+
+/* Splash screen */
+.splash-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, #1D3C34 0%, #2A5246 50%, #1D3C34 100%);
+}
+
+/* Spinner logo */
+@keyframes spin-slow {
+  from {
+    transform: rotate(0deg);
+  }
+
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes pulse-glow {
+
+  0%,
+  100% {
+    filter: drop-shadow(0 0 10px rgba(184, 155, 94, 0.3));
+  }
+
+  50% {
+    filter: drop-shadow(0 0 25px rgba(184, 155, 94, 0.7));
+  }
+}
+
+.logo-spin {
+  animation: spin-slow 3s linear infinite;
+}
+
+.logo-glow {
+  animation: pulse-glow 2s ease-in-out infinite;
+}
+
+/* Hero slideshow */
+@keyframes slide-fade {
+
+  0%,
+  25% {
+    opacity: 1;
+  }
+
+  30%,
+  95% {
+    opacity: 0;
+  }
+
+  100% {
+    opacity: 1;
+  }
+}
+
+/* Kenya map animation */
+@keyframes draw-path {
+  from {
+    stroke-dashoffset: 1000;
+  }
+
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+.kenya-map-path {
+  stroke-dasharray: 1000;
+  animation: draw-path 2s ease-in-out forwards;
+}
+
+/* Gradient text */
+.gradient-text {
+  background: linear-gradient(135deg, var(--color-accent) 0%, var(--color-accent-light) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* Glass card */
+.glass-card {
+  background: rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 16px;
+}
+
+.section-container {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 0 2rem;
+}
+
+@media (min-width: 768px) {
+  .section-container {
+    padding: 0 4rem;
+  }
+}
+
+@media (min-width: 1280px) {
+  .section-container {
+    padding: 0 6rem;
+  }
+}
+
+/* Scrollbar styling */
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--color-surface);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--color-accent);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--color-accent-dark);
+}
+
+/* Swiper overrides */
+.swiper-pagination-bullet-active {
+  background: var(--color-accent) !important;
+}
+
+.swiper-button-next,
+.swiper-button-prev {
+  color: var(--color-accent) !important;
+}
+
+/* Navbar animations */
+@keyframes nav-drop-in {
+  from { opacity: 0; transform: translateX(-50%) translateY(6px) scale(0.97); }
+  to   { opacity: 1; transform: translateX(-50%) translateY(0)    scale(1); }
+}
+@keyframes nav-fade-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+@keyframes nav-slide-down {
+  from { opacity: 0; transform: translateY(-12px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.animate-nav-drop-in { animation: nav-drop-in 0.2s ease forwards; }
+.animate-nav-fade-in { animation: nav-fade-in 0.2s ease; }
+.animate-nav-slide-down { animation: nav-slide-down 0.25s ease forwards; }

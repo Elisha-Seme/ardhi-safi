@@ -1,0 +1,109 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  password  String
+  name      String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model HeroSlide {
+  id       String   @id @default(cuid())
+  title    String
+  subtitle String?
+  imageUrl String
+  order    Int      @default(0)
+  active   Boolean  @default(true)
+}
+
+model BlogPost {
+  id        String   @id @default(cuid())
+  slug      String   @unique
+  title     String
+  excerpt   String
+  content   String
+  author    String
+  category  String
+  imageUrl  String?
+  date      String
+  readTime  String?
+  published Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model TeamMember {
+  id        String  @id @default(cuid())
+  name      String
+  title     String
+  bio       String
+  imageUrl  String
+  linkedin  String?
+  twitter   String?
+  order     Int     @default(0)
+  active    Boolean @default(true)
+}
+
+model Testimonial {
+  id       String  @id @default(cuid())
+  name     String
+  location String
+  quote    String
+  category String
+  rating   Int     @default(5)
+  active   Boolean @default(true)
+}
+
+model GalleryItem {
+  id        String   @id @default(cuid())
+  title     String
+  category  String
+  imageUrl  String
+  date      DateTime @default(now())
+}
+
+model Lead {
+  id          String   @id @default(cuid())
+  name        String
+  email       String
+  phone       String?
+  jobTitle    String?
+  company     String?
+  nationality String?
+  country     String?
+  county      String?
+  gender      String?
+  message     String
+  createdAt   DateTime @default(now())
+}
+
+model Property {
+  id          String   @id @default(cuid())
+  title       String
+  description String
+  location    String
+  price       Float
+  transaction String   // 'sale' or 'rent'
+  type        String   // 'residential', 'commercial', 'land'
+  bedrooms    Int?
+  bathrooms   Int?
+  area        Float
+  areaUnit    String   // 'sqft', 'acres', etc.
+  featured    Boolean  @default(false)
+  imageUrl    String?
+  active      Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}

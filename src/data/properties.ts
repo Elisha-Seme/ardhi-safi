@@ -1,0 +1,8 @@
+export function formatPrice(price: number, currency: string = "KES"): string {
+    return new Intl.NumberFormat("en-KE", {
+        style: "currency",
+        currency: currency,
+        minimumFractionDigits: 0,
+        maximumFractionDigits: 0,
+    }).format(price);
+}
