@@ -24,6 +24,7 @@ const sidebarLinks = [
     { name: "Team", href: "/admin/team", icon: Users },
     { name: "Testimonials", href: "/admin/testimonials", icon: MessageSquare },
     { name: "Leads", href: "/admin/leads", icon: FileText },
+    { name: "Users", href: "/admin/users", icon: Users },
 ];
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {

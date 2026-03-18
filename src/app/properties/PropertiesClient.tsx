@@ -9,6 +9,7 @@ import {
     MapPin,
     Search,
     Building2,
+    ChevronLeft,
     ChevronRight,
     X,
     BedDouble,
@@ -48,11 +49,13 @@ export default function PropertiesClient({
     types,
     locations,
     initialFilters,
+    pagination,
 }: {
     properties: Property[];
     types: string[];
     locations: string[];
     initialFilters: { q: string; transaction: string; type: string; sort: string };
+    pagination: { page: number; totalPages: number; totalCount: number };
 }) {
     const router = useRouter();
     const searchParams = useSearchParams();
@@ -64,8 +67,12 @@ export default function PropertiesClient({
 
     const pushFilters = useCallback((overrides: Record<string, string>) => {
         const params = new URLSearchParams(searchParams.toString());
+        // Reset to page 1 when changing filters (not when explicitly setting page)
+        if (!("page" in overrides)) {
+            params.delete("page");
+        }
         for (const [key, value] of Object.entries(overrides)) {
-            if (!value || value === "all" || value === "newest" || value === "") {
+            if (!value || value === "all" || value === "newest" || value === "" || (key === "page" && value === "1")) {
                 params.delete(key);
             } else {
                 params.set(key, value);
@@ -195,8 +202,8 @@ export default function PropertiesClient({
                         <div className="flex items-center justify-between mt-4 pt-4 border-t border-gray-100">
                             <div className="flex items-center gap-3">
                                 <p className="text-sm text-text-secondary">
-                                    <span className="font-bold text-primary">{properties.length}</span>{" "}
-                                    {properties.length === 1 ? "property" : "properties"} found
+                                    <span className="font-bold text-primary">{pagination.totalCount}</span>{" "}
+                                    {pagination.totalCount === 1 ? "property" : "properties"} found
                                 </p>
                                 {activeFilterCount > 0 && (
                                     <button
@@ -247,7 +254,7 @@ export default function PropertiesClient({
                                         animate={{ opacity: 1, y: 0 }}
                                         transition={{ delay: i * 0.05, duration: 0.4 }}
                                     >
-                                        <Link href={`/contact?type=${property.type}&transaction=${property.transaction}`} className="block group bg-white rounded-2xl overflow-hidden shadow-md hover:shadow-2xl transition-all duration-500 hover:-translate-y-2">
+                                        <Link href={`/properties/${property.id}`} className="block group bg-white rounded-2xl overflow-hidden shadow-md hover:shadow-2xl transition-all duration-500 hover:-translate-y-2">
                                             <div className="relative h-60 bg-gradient-to-br from-primary/20 to-accent/20 overflow-hidden">
                                                 {property.imageUrl ? (
                                                     <Image
@@ -348,7 +355,7 @@ export default function PropertiesClient({
                                         animate={{ opacity: 1, x: 0 }}
                                         transition={{ delay: i * 0.04, duration: 0.4 }}
                                     >
-                                        <Link href={`/contact?type=${property.type}&transaction=${property.transaction}`} className="flex flex-col md:flex-row bg-white rounded-2xl overflow-hidden shadow-md hover:shadow-xl transition-all group">
+                                        <Link href={`/properties/${property.id}`} className="flex flex-col md:flex-row bg-white rounded-2xl overflow-hidden shadow-md hover:shadow-xl transition-all group">
                                             <div className="relative w-full md:w-72 h-52 md:h-auto flex-shrink-0 bg-gradient-to-br from-primary/20 to-accent/20 overflow-hidden">
                                                 {property.imageUrl ? (
                                                     <Image
@@ -444,6 +451,38 @@ export default function PropertiesClient({
                                 className="inline-flex items-center gap-2 px-6 py-3 bg-accent hover:bg-accent-dark text-primary font-semibold rounded-xl transition-all text-sm"
                             >
                                 Clear All Filters
+                            </button>
+                        </div>
+                    )}
+                    {/* Pagination */}
+                    {pagination.totalPages > 1 && (
+                        <div className="flex items-center justify-center gap-2 mt-12">
+                            <button
+                                onClick={() => pushFilters({ page: String(pagination.page - 1) })}
+                                disabled={pagination.page <= 1}
+                                className="p-2.5 rounded-xl border border-gray-200 text-primary hover:bg-accent/10 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+                            >
+                                <ChevronLeft size={18} />
+                            </button>
+                            {Array.from({ length: pagination.totalPages }, (_, i) => i + 1).map((p) => (
+                                <button
+                                    key={p}
+                                    onClick={() => pushFilters({ page: String(p) })}
+                                    className={`w-10 h-10 rounded-xl text-sm font-bold transition-all ${
+                                        p === pagination.page
+                                            ? "bg-accent text-primary shadow-lg shadow-accent/20"
+                                            : "border border-gray-200 text-text-secondary hover:bg-gray-50"
+                                    }`}
+                                >
+                                    {p}
+                                </button>
+                            ))}
+                            <button
+                                onClick={() => pushFilters({ page: String(pagination.page + 1) })}
+                                disabled={pagination.page >= pagination.totalPages}
+                                className="p-2.5 rounded-xl border border-gray-200 text-primary hover:bg-accent/10 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+                            >
+                                <ChevronRight size={18} />
                             </button>
                         </div>
                     )}

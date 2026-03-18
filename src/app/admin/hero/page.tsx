@@ -9,6 +9,7 @@ import {
     Layout
 } from "lucide-react";
 import Link from "next/link";
+import Image from "next/image";
 import { deleteHeroSlide } from "./actions";
 import { revalidatePath } from "next/cache";
 
@@ -37,7 +38,7 @@ export default async function AdminHeroPage() {
                     <div key={slide.id} className="bg-white rounded-3xl shadow-sm border border-gray-100 overflow-hidden group hover:shadow-md transition-all">
                         <div className="h-48 relative overflow-hidden bg-surface">
                             {slide.imageUrl ? (
-                                <img src={slide.imageUrl} alt={slide.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+                                <Image src={slide.imageUrl} alt={slide.title} fill className="object-cover group-hover:scale-105 transition-transform duration-500" />
                             ) : (
                                 <div className="w-full h-full flex items-center justify-center text-primary/10">
                                     <ImageIcon size={48} />

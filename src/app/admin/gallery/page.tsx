@@ -7,6 +7,7 @@ import {
     Layout
 } from "lucide-react";
 import Link from "next/link";
+import Image from "next/image";
 import { deleteGalleryItem } from "./actions";
 import { revalidatePath } from "next/cache";
 import { format } from "date-fns";
@@ -36,7 +37,7 @@ export default async function AdminGalleryPage() {
                     <div key={item.id} className="bg-white rounded-3xl shadow-sm border border-gray-100 overflow-hidden group hover:shadow-md transition-all">
                         <div className="h-48 relative overflow-hidden bg-surface">
                             {item.imageUrl ? (
-                                <img src={item.imageUrl} alt={item.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+                                <Image src={item.imageUrl} alt={item.title} fill className="object-cover group-hover:scale-105 transition-transform duration-500" />
                             ) : (
                                 <div className="w-full h-full flex items-center justify-center text-primary/10">
                                     <ImageIcon size={48} />

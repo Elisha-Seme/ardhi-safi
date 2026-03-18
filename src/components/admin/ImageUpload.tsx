@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useRef } from "react";
+import Image from "next/image";
 import { Upload, X, Loader2, ImageIcon } from "lucide-react";
 
 interface ImageUploadProps {
@@ -53,9 +54,9 @@ export default function ImageUpload({ name, defaultValue, required, onChange }: 
         <div className="space-y-3">
             <input type="hidden" name={name} value={url} />
 
-            <div className="w-full aspect-video bg-slate-100 rounded-xl overflow-hidden border border-slate-200 flex items-center justify-center">
+            <div className="relative w-full aspect-video bg-slate-100 rounded-xl overflow-hidden border border-slate-200 flex items-center justify-center">
                 {url ? (
-                    <img src={url} alt="Preview" className="w-full h-full object-cover" />
+                    <Image src={url} alt="Preview" fill className="object-cover" />
                 ) : (
                     <ImageIcon size={32} className="text-slate-300" />
                 )}

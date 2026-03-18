@@ -9,18 +9,22 @@ export const metadata: Metadata = {
     description: "Browse premium properties for sale and rent across all 47 counties in Kenya. Find your perfect home, office, or investment property.",
 };
 
+const PAGE_SIZE = 12;
+
 interface Props {
     searchParams: Promise<{
         q?: string;
         transaction?: string;
         type?: string;
         sort?: string;
+        page?: string;
     }>;
 }
 
 export default async function PropertiesPage({ searchParams }: Props) {
     const params = await searchParams;
     const { q, transaction, type, sort } = params;
+    const page = Math.max(1, parseInt(params.page || "1", 10) || 1);
 
     // Build Prisma where clause from search params
     const where: Prisma.PropertyWhereInput = { active: true };
@@ -55,8 +59,9 @@ export default async function PropertiesPage({ searchParams }: Props) {
             orderBy = { createdAt: "desc" };
     }
 
-    const [properties, allTypes, allLocations] = await Promise.all([
-        prisma.property.findMany({ where, orderBy }),
+    const [properties, totalCount, allTypes, allLocations] = await Promise.all([
+        prisma.property.findMany({ where, orderBy, skip: (page - 1) * PAGE_SIZE, take: PAGE_SIZE }),
+        prisma.property.count({ where }),
         prisma.property.findMany({
             where: { active: true },
             select: { type: true },
@@ -69,6 +74,8 @@ export default async function PropertiesPage({ searchParams }: Props) {
         }),
     ]);
 
+    const totalPages = Math.ceil(totalCount / PAGE_SIZE);
+
     return (
         <Suspense>
             <PropertiesClient
@@ -76,6 +83,7 @@ export default async function PropertiesPage({ searchParams }: Props) {
                 types={allTypes.map((t) => t.type)}
                 locations={allLocations.map((l) => l.location)}
                 initialFilters={{ q: q || "", transaction: transaction || "all", type: type || "all", sort: sort || "newest" }}
+                pagination={{ page, totalPages, totalCount }}
             />
         </Suspense>
     );

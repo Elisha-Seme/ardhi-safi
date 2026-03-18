@@ -5,9 +5,14 @@ import { useEffect, useState } from "react";
 import Image from "next/image";
 
 export default function SplashScreen() {
-    const [isVisible, setIsVisible] = useState(true);
+    const [isVisible, setIsVisible] = useState(false);
 
     useEffect(() => {
+        const seen = sessionStorage.getItem("splash_seen");
+        if (seen) return;
+
+        setIsVisible(true);
+        sessionStorage.setItem("splash_seen", "1");
         const timer = setTimeout(() => setIsVisible(false), 1500);
         return () => clearTimeout(timer);
     }, []);

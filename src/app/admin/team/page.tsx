@@ -9,6 +9,7 @@ import {
     Layout
 } from "lucide-react";
 import Link from "next/link";
+import Image from "next/image";
 import { deleteTeamMember } from "./actions";
 import { revalidatePath } from "next/cache";
 
@@ -37,7 +38,7 @@ export default async function AdminTeamPage() {
                     <div key={member.id} className="bg-white rounded-3xl shadow-sm border border-gray-100 overflow-hidden group hover:shadow-md transition-all">
                         <div className="h-48 relative overflow-hidden bg-surface">
                             {member.imageUrl ? (
-                                <img src={member.imageUrl} alt={member.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 object-top" />
+                                <Image src={member.imageUrl} alt={member.name} fill className="object-cover group-hover:scale-105 transition-transform duration-500 object-top" />
                             ) : (
                                 <div className="w-full h-full flex items-center justify-center text-primary/10">
                                     <UserIcon size={48} />

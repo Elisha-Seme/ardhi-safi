@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { Search, Eye, Edit, Trash2, FileText, User as UserIcon, Calendar } from "lucide-react";
 import { deleteBlog } from "./actions";
 
@@ -65,9 +66,9 @@ export default function BlogsClientTable({ blogs }: { blogs: any[] }) {
                                     <tr key={post.id} className="hover:bg-gray-50/50 transition-colors group">
                                         <td className="px-6 py-6">
                                             <div className="flex items-center gap-4">
-                                                <div className="w-14 h-14 bg-surface rounded-xl flex items-center justify-center shrink-0 border border-gray-100">
+                                                <div className="relative w-14 h-14 bg-surface rounded-xl flex items-center justify-center shrink-0 border border-gray-100 overflow-hidden">
                                                     {post.imageUrl ? (
-                                                        <img src={post.imageUrl} alt="" className="w-full h-full object-cover rounded-xl" />
+                                                        <Image src={post.imageUrl} alt="" fill className="object-cover rounded-xl" />
                                                     ) : (
                                                         <FileText className="text-accent" size={24} />
                                                     )}

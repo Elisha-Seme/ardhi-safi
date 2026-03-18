@@ -2,7 +2,10 @@
 
 import { motion } from "framer-motion";
 import Link from "next/link";
-import { ArrowLeft, Clock, User, Building2 } from "lucide-react";
+import Image from "next/image";
+import { ArrowLeft, Clock, User } from "lucide-react";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 import { BlogPost } from "@/data/blogs";
 
 interface BlogPostClientProps {
@@ -40,24 +43,23 @@ export default function BlogPostClient({ post }: BlogPostClientProps) {
                 <div className="section-container">
                     <div className="max-w-3xl mx-auto">
                         <div className="bg-white rounded-2xl p-8 md:p-12 shadow-md">
-                            {/* Featured Image Placeholder */}
-                            <div className="h-64 bg-gradient-to-br from-primary/10 to-accent/10 rounded-xl mb-8 flex items-center justify-center">
-                                <Building2 size={48} className="text-primary/20" />
-                            </div>
+                            {/* Featured Image */}
+                            {post.image && (
+                                <div className="relative h-64 md:h-80 rounded-xl mb-8 overflow-hidden">
+                                    <Image
+                                        src={post.image}
+                                        alt={post.title}
+                                        fill
+                                        className="object-cover"
+                                        sizes="(max-width: 768px) 100vw, 768px"
+                                    />
+                                </div>
+                            )}
 
-                            <div className="prose prose-lg max-w-none">
-                                <p className="text-text-secondary text-lg leading-relaxed mb-6">{post.excerpt}</p>
-                                <p className="text-text-secondary leading-relaxed mb-6">{post.content}</p>
-                                <p className="text-text-secondary leading-relaxed mb-6">
-                                    The Kenyan real estate market continues to present significant opportunities for both local and international investors. With ongoing infrastructure development, including the expansion of major highways and the growing middle class, demand for quality housing and commercial spaces remains strong.
-                                </p>
-                                <p className="text-text-secondary leading-relaxed mb-6">
-                                    At Ardhi Safi, we leverage our deep market knowledge and extensive network to help our clients navigate these opportunities with confidence. Our commitment to transparency and proper documentation ensures that every transaction is secure and compliant with all applicable regulations.
-                                </p>
-                                <p className="text-text-secondary leading-relaxed">
-                                    For more information or to discuss investment opportunities, please don&apos;t hesitate to{" "}
-                                    <Link href="/contact" className="text-accent hover:underline font-medium">contact our team</Link>.
-                                </p>
+                            <div className="prose prose-lg max-w-none prose-headings:font-heading prose-headings:text-primary prose-a:text-accent prose-strong:text-primary">
+                                <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                                    {post.content}
+                                </ReactMarkdown>
                             </div>
                         </div>
                     </div>

@@ -18,6 +18,7 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { blogCategories } from "@/data/blogs";
 import ImageUpload from "@/components/admin/ImageUpload";
+import MarkdownEditor from "@/components/admin/MarkdownEditor";
 import type { ActionResponse } from "@/lib/action-response";
 
 interface BlogFormProps {
@@ -188,13 +189,12 @@ export default function BlogForm({ initialData, mode }: BlogFormProps) {
                         <label className="text-xs font-bold uppercase tracking-widest text-text-secondary flex items-center gap-2">
                             <FileText size={14} className="text-accent" /> Full Article Content
                         </label>
-                        <textarea
+                        <MarkdownEditor
                             name="content"
                             required
-                            rows={12}
+                            rows={14}
                             defaultValue={initialData?.content}
-                            placeholder="Write your article here (Markdown supported)..."
-                            className="w-full px-6 py-4 bg-gray-50 border border-transparent focus:border-accent focus:bg-white rounded-2xl outline-none transition-all text-sm leading-relaxed"
+                            placeholder="Write your article here using Markdown..."
                         />
                     </div>
 

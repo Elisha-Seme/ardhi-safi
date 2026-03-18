@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { Edit2, Trash2, Building2, MapPin, Search } from "lucide-react";
 
 export function formatPrice(price: number) {
@@ -57,9 +58,9 @@ export default function PropertiesClientTable({ properties, deletePropertyAction
                                 <tr key={property.id} className="hover:bg-slate-50/50 transition-colors group">
                                     <td className="px-6 py-4">
                                         <div className="flex items-center gap-4">
-                                            <div className="w-12 h-12 rounded-lg bg-slate-100 overflow-hidden flex-shrink-0 border border-slate-200">
+                                            <div className="relative w-12 h-12 rounded-lg bg-slate-100 overflow-hidden flex-shrink-0 border border-slate-200">
                                                 {property.imageUrl ? (
-                                                    <img src={property.imageUrl} alt="" className="w-full h-full object-cover" />
+                                                    <Image src={property.imageUrl} alt="" fill className="object-cover" />
                                                 ) : (
                                                     <div className="w-full h-full flex items-center justify-center text-slate-300">
                                                         <Building2 size={24} />
