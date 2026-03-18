@@ -3,7 +3,7 @@
 import Image from "next/image";
 import { motion } from "framer-motion";
 import Link from "next/link";
-import { Users, ArrowRight, Linkedin, Twitter } from "lucide-react";
+import { Users, ArrowRight, Linkedin, Mail } from "lucide-react";
 
 interface TeamMember {
     id: string;
@@ -11,8 +11,8 @@ interface TeamMember {
     title: string;
     imageUrl: string;
     linkedin: string | null;
-    twitter: string | null;
-    slug: string; // ID will be used as the slug
+    email: string | null;
+    slug: string;
 }
 
 export default function AboutTeamGrid({ team }: { team: TeamMember[] }) {
@@ -55,12 +55,12 @@ export default function AboutTeamGrid({ team }: { team: TeamMember[] }) {
                                     ) : (
                                         <Linkedin size={16} className="text-gray-200" />
                                     )}
-                                    {member.twitter ? (
-                                        <a href={member.twitter} target="_blank" rel="noopener noreferrer" onClick={(e) => e.stopPropagation()}>
-                                            <Twitter size={16} className="text-sky-500 hover:text-sky-700 transition-colors" />
+                                    {member.email ? (
+                                        <a href={`mailto:${member.email}`} onClick={(e) => e.stopPropagation()}>
+                                            <Mail size={16} className="text-accent hover:text-accent-dark transition-colors" />
                                         </a>
                                     ) : (
-                                        <Twitter size={16} className="text-gray-200" />
+                                        <Mail size={16} className="text-gray-200" />
                                     )}
                                 </div>
                             </div>

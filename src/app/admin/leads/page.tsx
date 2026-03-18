@@ -14,18 +14,19 @@ import { revalidatePath } from "next/cache";
 
 export default async function AdminLeadsPage() {
     const leads = await prisma.lead.findMany({
-        orderBy: { createdAt: 'desc' }
+        orderBy: { createdAt: "desc" },
     });
 
     return (
         <div className="space-y-8">
             <div>
-                <h1 className="text-3xl font-heading text-primary">Contact Leads</h1>
+                <h1 className="text-2xl sm:text-3xl font-heading text-primary">Contact Leads</h1>
                 <p className="text-text-secondary text-sm mt-1">Inquiries and messages submitted through the website contact form.</p>
             </div>
 
             <div className="bg-white rounded-3xl shadow-sm border border-gray-100 overflow-hidden">
-                <div className="overflow-x-auto">
+                {/* Desktop Table */}
+                <div className="hidden md:block overflow-x-auto">
                     <table className="w-full text-left border-collapse min-w-[800px]">
                         <thead>
                             <tr className="bg-surface border-b border-gray-100/50">
@@ -40,12 +41,8 @@ export default async function AdminLeadsPage() {
                             {leads.map((lead) => (
                                 <tr key={lead.id} className="hover:bg-gray-50/50 transition-colors">
                                     <td className="py-5 px-6 whitespace-nowrap">
-                                        <p className="text-sm font-medium text-primary">
-                                            {format(new Date(lead.createdAt), 'MMM d, yyyy')}
-                                        </p>
-                                        <p className="text-xs text-text-secondary">
-                                            {format(new Date(lead.createdAt), 'h:mm a')}
-                                        </p>
+                                        <p className="text-sm font-medium text-primary">{format(new Date(lead.createdAt), "MMM d, yyyy")}</p>
+                                        <p className="text-xs text-text-secondary">{format(new Date(lead.createdAt), "h:mm a")}</p>
                                     </td>
                                     <td className="py-5 px-6">
                                         <p className="text-sm font-bold text-primary mb-1">{lead.name}</p>
@@ -58,13 +55,6 @@ export default async function AdminLeadsPage() {
                                                     <Phone size={12} /> {lead.phone}
                                                 </a>
                                             )}
-                                            {(lead.nationality || lead.gender) && (
-                                                <div className="flex items-center gap-2 text-[10px] text-text-secondary uppercase tracking-wider mt-2">
-                                                    {lead.nationality && <span>{lead.nationality}</span>}
-                                                    {lead.nationality && lead.gender && <span>•</span>}
-                                                    {lead.gender && <span>{lead.gender}</span>}
-                                                </div>
-                                            )}
                                         </div>
                                     </td>
                                     <td className="py-5 px-6">
@@ -76,15 +66,11 @@ export default async function AdminLeadsPage() {
                                             ) : (
                                                 <p className="text-xs text-text-secondary italic">No company</p>
                                             )}
-                                            {lead.jobTitle && (
-                                                <p className="text-xs text-text-secondary">{lead.jobTitle}</p>
-                                            )}
+                                            {lead.jobTitle && <p className="text-xs text-text-secondary">{lead.jobTitle}</p>}
                                             {(lead.country || lead.county) && (
                                                 <p className="flex items-center gap-2 text-[10px] text-text-secondary uppercase tracking-wider mt-2">
                                                     <MapPin size={10} />
-                                                    {lead.country && lead.country}
-                                                    {lead.country && lead.county && ' - '}
-                                                    {lead.county && lead.county}
+                                                    {lead.country}{lead.country && lead.county && " - "}{lead.county}
                                                 </p>
                                             )}
                                         </div>
@@ -92,18 +78,12 @@ export default async function AdminLeadsPage() {
                                     <td className="py-5 px-6 max-w-xs">
                                         <div className="flex items-start gap-2">
                                             <MessageSquare size={14} className="text-accent shrink-0 mt-0.5" />
-                                            <p className="text-sm text-text-secondary line-clamp-3" title={lead.message}>
-                                                {lead.message}
-                                            </p>
+                                            <p className="text-sm text-text-secondary line-clamp-3" title={lead.message ?? undefined}>{lead.message}</p>
                                         </div>
                                     </td>
                                     <td className="py-5 px-6 text-right">
                                         <form action={async () => { "use server"; await deleteLead(lead.id); revalidatePath("/admin/leads"); }}>
-                                            <button
-                                                type="submit"
-                                                className="p-2 hover:bg-red-50 text-red-500 rounded-lg transition-colors inline-block"
-                                                title="Delete Lead"
-                                            >
+                                            <button type="submit" className="p-2 hover:bg-red-50 text-red-500 rounded-lg transition-colors" title="Delete Lead">
                                                 <Trash2 size={16} />
                                             </button>
                                         </form>
@@ -120,6 +100,48 @@ export default async function AdminLeadsPage() {
                             )}
                         </tbody>
                     </table>
+                </div>
+
+                {/* Mobile Card List */}
+                <div className="md:hidden divide-y divide-gray-100">
+                    {leads.length > 0 ? leads.map((lead) => (
+                        <div key={lead.id} className="p-4">
+                            <div className="flex items-start justify-between gap-2">
+                                <div>
+                                    <p className="text-sm font-bold text-primary">{lead.name}</p>
+                                    <p className="text-[10px] text-text-secondary">{format(new Date(lead.createdAt), "MMM d, yyyy · h:mm a")}</p>
+                                </div>
+                                <form action={async () => { "use server"; await deleteLead(lead.id); revalidatePath("/admin/leads"); }}>
+                                    <button type="submit" className="p-1.5 hover:bg-red-50 text-red-500 rounded-lg transition-colors flex-shrink-0">
+                                        <Trash2 size={14} />
+                                    </button>
+                                </form>
+                            </div>
+                            <div className="mt-2 space-y-1">
+                                <a href={`mailto:${lead.email}`} className="flex items-center gap-1.5 text-xs text-accent">
+                                    <Mail size={11} /> {lead.email}
+                                </a>
+                                {lead.phone && (
+                                    <a href={`tel:${lead.phone}`} className="flex items-center gap-1.5 text-xs text-text-secondary">
+                                        <Phone size={11} /> {lead.phone}
+                                    </a>
+                                )}
+                                {lead.company && (
+                                    <p className="flex items-center gap-1.5 text-xs text-text-secondary">
+                                        <Building2 size={11} /> {lead.company}
+                                    </p>
+                                )}
+                            </div>
+                            {lead.message && (
+                                <p className="mt-2 text-xs text-text-secondary line-clamp-2 bg-gray-50 rounded-lg p-2">{lead.message}</p>
+                            )}
+                        </div>
+                    )) : (
+                        <div className="py-12 text-center text-text-secondary italic text-sm">
+                            <Globe size={28} className="mx-auto text-gray-200 mb-2" />
+                            No inquiries received yet.
+                        </div>
+                    )}
                 </div>
             </div>
         </div>

@@ -14,7 +14,7 @@ export async function createTeamMember(formData: FormData): Promise<ActionRespon
     const bio = formData.get("bio") as string;
     const imageUrl = formData.get("imageUrl") as string;
     const linkedin = formData.get("linkedin") as string;
-    const twitter = formData.get("twitter") as string;
+    const email = formData.get("email") as string;
     const order = parseInt(formData.get("order") as string) || 0;
     const active = formData.get("active") === "true";
 
@@ -23,14 +23,13 @@ export async function createTeamMember(formData: FormData): Promise<ActionRespon
 
     if (!validateUrl(imageUrl)) return { success: false, error: "Invalid image URL" };
     if (linkedin && !validateUrl(linkedin)) return { success: false, error: "Invalid LinkedIn URL" };
-    if (twitter && !validateUrl(twitter)) return { success: false, error: "Invalid Twitter URL" };
 
     try {
         await prisma.teamMember.create({
             data: {
                 name, title, bio, imageUrl,
                 linkedin: linkedin || null,
-                twitter: twitter || null,
+                email: email || null,
                 order, active,
             },
         });
@@ -52,7 +51,7 @@ export async function updateTeamMember(id: string, formData: FormData): Promise<
     const bio = formData.get("bio") as string;
     const imageUrl = formData.get("imageUrl") as string;
     const linkedin = formData.get("linkedin") as string;
-    const twitter = formData.get("twitter") as string;
+    const email = formData.get("email") as string;
     const order = parseInt(formData.get("order") as string) || 0;
     const active = formData.get("active") === "true";
 
@@ -61,7 +60,6 @@ export async function updateTeamMember(id: string, formData: FormData): Promise<
 
     if (!validateUrl(imageUrl)) return { success: false, error: "Invalid image URL" };
     if (linkedin && !validateUrl(linkedin)) return { success: false, error: "Invalid LinkedIn URL" };
-    if (twitter && !validateUrl(twitter)) return { success: false, error: "Invalid Twitter URL" };
 
     try {
         await prisma.teamMember.update({
@@ -69,7 +67,7 @@ export async function updateTeamMember(id: string, formData: FormData): Promise<
             data: {
                 name, title, bio, imageUrl,
                 linkedin: linkedin || null,
-                twitter: twitter || null,
+                email: email || null,
                 order, active,
             },
         });

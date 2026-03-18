@@ -5,6 +5,8 @@ import { useRouter, useSearchParams } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
 import { motion } from "framer-motion";
+import dynamic from "next/dynamic";
+
 import {
     MapPin,
     Search,
@@ -17,7 +19,12 @@ import {
     Maximize,
     LayoutGrid,
     List,
+    SlidersHorizontal,
+    Map as MapIcon,
 } from "lucide-react";
+import LocationSearch from "@/components/LocationSearch";
+
+const PropertiesMap = dynamic(() => import("@/components/PropertiesMap"), { ssr: false });
 
 interface Property {
     id: string;
@@ -33,6 +40,8 @@ interface Property {
     areaUnit: string;
     featured: boolean;
     imageUrl: string | null;
+    latitude: number | null;
+    longitude: number | null;
     active: boolean;
 }
 
@@ -54,7 +63,11 @@ export default function PropertiesClient({
     properties: Property[];
     types: string[];
     locations: string[];
-    initialFilters: { q: string; transaction: string; type: string; sort: string };
+    initialFilters: {
+        q: string; transaction: string; type: string; sort: string;
+        category: string; county: string; priceMin: string; priceMax: string;
+        beds: string; baths: string;
+    };
     pagination: { page: number; totalPages: number; totalCount: number };
 }) {
     const router = useRouter();
@@ -62,8 +75,17 @@ export default function PropertiesClient({
     const [searchQuery, setSearchQuery] = useState(initialFilters.q);
     const [filterTransaction, setFilterTransaction] = useState(initialFilters.transaction);
     const [filterType, setFilterType] = useState(initialFilters.type);
+    const [filterCategory, setFilterCategory] = useState(initialFilters.category);
+    const [filterCounty, setFilterCounty] = useState(initialFilters.county);
+    const [filterPriceMin, setFilterPriceMin] = useState(initialFilters.priceMin);
+    const [filterPriceMax, setFilterPriceMax] = useState(initialFilters.priceMax);
+    const [filterBeds, setFilterBeds] = useState(initialFilters.beds);
+    const [filterBaths, setFilterBaths] = useState(initialFilters.baths);
     const [sortBy, setSortBy] = useState(initialFilters.sort);
     const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
+    const [showMoreFilters, setShowMoreFilters] = useState(false);
+    const [showMap, setShowMap] = useState(true);
+    const [mapFocus, setMapFocus] = useState<{ lat: number; lng: number } | null>(null);
 
     const pushFilters = useCallback((overrides: Record<string, string>) => {
         const params = new URLSearchParams(searchParams.toString());
@@ -72,7 +94,7 @@ export default function PropertiesClient({
             params.delete("page");
         }
         for (const [key, value] of Object.entries(overrides)) {
-            if (!value || value === "all" || value === "newest" || value === "" || (key === "page" && value === "1")) {
+            if (!value || value === "all" || value === "newest" || value === "any" || value === "" || (key === "page" && value === "1")) {
                 params.delete(key);
             } else {
                 params.set(key, value);
@@ -82,18 +104,34 @@ export default function PropertiesClient({
         router.push(qs ? `/properties?${qs}` : "/properties");
     }, [router, searchParams]);
 
-    const activeFilterCount = [filterTransaction !== "all", filterType !== "all"].filter(Boolean).length;
+    const activeFilterCount = [
+        filterTransaction !== "all",
+        filterType !== "all",
+        filterCategory !== "all",
+        filterCounty !== "",
+        filterPriceMin !== "",
+        filterPriceMax !== "",
+        filterBeds !== "any",
+        filterBaths !== "any",
+    ].filter(Boolean).length;
 
     function clearFilters() {
         setSearchQuery("");
         setFilterTransaction("all");
         setFilterType("all");
+        setFilterCategory("all");
+        setFilterCounty("");
+        setFilterPriceMin("");
+        setFilterPriceMax("");
+        setFilterBeds("any");
+        setFilterBaths("any");
         setSortBy("newest");
+        setShowMoreFilters(false);
         router.push("/properties");
     }
 
     return (
-        <div className="overflow-hidden">
+        <div>
             {/* Hero Banner */}
             <section className="relative pt-36 pb-20 bg-primary overflow-hidden">
                 <div className="absolute inset-0 opacity-[0.03]">
@@ -134,7 +172,7 @@ export default function PropertiesClient({
                 </div>
             </section>
 
-            {/* Search & Filter Bar */}
+            {/* Search & Filter Bar — Zillow-style */}
             <section className="relative -mt-8 z-20">
                 <div className="section-container">
                     <motion.div
@@ -143,64 +181,213 @@ export default function PropertiesClient({
                         transition={{ delay: 0.2, duration: 0.5 }}
                         className="bg-white rounded-2xl shadow-xl border border-gray-100 p-4 md:p-6"
                     >
-                        <div className="flex flex-col md:flex-row gap-4">
-                            {/* Search */}
-                            <div className="relative flex-1">
-                                <Search
-                                    className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400"
-                                    size={18}
-                                />
-                                <input
-                                    type="text"
-                                    value={searchQuery}
-                                    onChange={(e) => setSearchQuery(e.target.value)}
-                                    onKeyDown={(e) => { if (e.key === "Enter") pushFilters({ q: searchQuery }); }}
-                                    onBlur={() => pushFilters({ q: searchQuery })}
-                                    placeholder="Search by title, location, or type..."
-                                    className="w-full pl-12 pr-4 py-3.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-accent/20 focus:border-accent focus:outline-none transition-all"
-                                />
+                        {/* Row 1: Location + Transaction Toggle + Search button */}
+                        <div className="flex flex-col sm:flex-row gap-3 items-stretch">
+                            <LocationSearch
+                                value={filterCounty}
+                                onChange={(val) => { setFilterCounty(val); }}
+                                onLocationSelect={(coords) => {
+                                    setMapFocus({ lat: coords.lat, lng: coords.lng });
+                                    if (!showMap) setShowMap(true);
+                                }}
+                                placeholder="Search by county, area, or ward..."
+                                className="flex-1 min-w-0"
+                            />
+
+                            {/* Buy / Rent toggle pills */}
+                            <div className="flex bg-gray-100 p-1 rounded-xl self-stretch sm:self-center">
+                                {[
+                                    { value: "all", label: "All" },
+                                    { value: "sale", label: "Buy" },
+                                    { value: "rent", label: "Rent" },
+                                ].map((t) => (
+                                    <button
+                                        key={t.value}
+                                        type="button"
+                                        suppressHydrationWarning
+                                        onClick={() => { setFilterTransaction(t.value); pushFilters({ transaction: t.value }); }}
+                                        className={`flex-1 sm:flex-none px-4 py-2.5 text-xs font-bold uppercase tracking-wider rounded-lg transition-all ${
+                                            filterTransaction === t.value
+                                                ? "bg-white text-primary shadow-sm"
+                                                : "text-gray-400 hover:text-gray-600"
+                                        }`}
+                                    >
+                                        {t.label}
+                                    </button>
+                                ))}
                             </div>
 
-                            {/* Quick Filters */}
-                            <div className="flex gap-3 flex-wrap md:flex-nowrap">
-                                <select
-                                    value={filterTransaction}
-                                    onChange={(e) => { setFilterTransaction(e.target.value); pushFilters({ transaction: e.target.value }); }}
-                                    className="px-4 py-3.5 bg-gray-50 border border-gray-200 rounded-xl text-sm font-medium outline-none cursor-pointer focus:ring-2 focus:ring-accent/20 focus:border-accent transition-all"
-                                >
-                                    <option value="all">Buy or Rent</option>
-                                    <option value="sale">For Sale</option>
-                                    <option value="rent">For Rent</option>
-                                </select>
-
-                                <select
-                                    value={filterType}
-                                    onChange={(e) => { setFilterType(e.target.value); pushFilters({ type: e.target.value }); }}
-                                    className="px-4 py-3.5 bg-gray-50 border border-gray-200 rounded-xl text-sm font-medium outline-none cursor-pointer focus:ring-2 focus:ring-accent/20 focus:border-accent transition-all"
-                                >
-                                    <option value="all">All Types</option>
-                                    {types.map((t) => (
-                                        <option key={t} value={t}>
-                                            {t.charAt(0).toUpperCase() + t.slice(1)}
-                                        </option>
-                                    ))}
-                                </select>
-
-                                <select
-                                    value={sortBy}
-                                    onChange={(e) => { setSortBy(e.target.value); pushFilters({ sort: e.target.value }); }}
-                                    className="px-4 py-3.5 bg-gray-50 border border-gray-200 rounded-xl text-sm font-medium outline-none cursor-pointer focus:ring-2 focus:ring-accent/20 focus:border-accent transition-all"
-                                >
-                                    <option value="newest">Newest First</option>
-                                    <option value="price-asc">Price: Low → High</option>
-                                    <option value="price-desc">Price: High → Low</option>
-                                </select>
-                            </div>
+                            <button
+                                type="button"
+                                suppressHydrationWarning
+                                onClick={() => pushFilters({ q: searchQuery, county: filterCounty })}
+                                className="flex items-center justify-center gap-2 px-6 py-3 bg-accent hover:bg-accent-dark text-primary font-semibold rounded-xl transition-all hover:shadow-lg hover:shadow-accent/30 text-sm w-full sm:w-auto"
+                            >
+                                <Search size={16} />
+                                Search
+                            </button>
                         </div>
+
+                        {/* Row 1.5: Property Type — Residential / Commercial / Land */}
+                        <div className="flex flex-wrap items-center gap-2 mt-3 pt-3 border-t border-gray-100">
+                            <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mr-1">Type</span>
+                            {[
+                                { value: "all", label: "All", icon: Building2 },
+                                { value: "residential", label: "Residential", icon: BedDouble },
+                                { value: "commercial", label: "Commercial", icon: Building2 },
+                                { value: "land", label: "Land", icon: Maximize },
+                            ].map((t) => (
+                                <button
+                                    key={t.value}
+                                    type="button"
+                                    suppressHydrationWarning
+                                    onClick={() => { setFilterType(t.value); pushFilters({ type: t.value }); }}
+                                    className={`flex items-center gap-1.5 px-4 py-2 text-xs font-semibold rounded-xl transition-all ${
+                                        filterType === t.value
+                                            ? "bg-primary text-white shadow-md shadow-primary/20"
+                                            : "bg-gray-100 text-gray-500 hover:bg-gray-200"
+                                    }`}
+                                >
+                                    <t.icon size={13} />
+                                    {t.label}
+                                </button>
+                            ))}
+                        </div>
+
+                        {/* Row 2: Price range + Beds + Baths + Type + More */}
+                        <div className="flex flex-wrap items-center gap-3 mt-3 pt-3 border-t border-gray-100">
+                            {/* Price range */}
+                            <div className="flex items-center gap-2 flex-1 sm:flex-none">
+                                <input
+                                    type="number"
+                                    value={filterPriceMin}
+                                    suppressHydrationWarning
+                                    onChange={(e) => setFilterPriceMin(e.target.value)}
+                                    onBlur={() => pushFilters({ priceMin: filterPriceMin })}
+                                    onKeyDown={(e) => { if (e.key === "Enter") pushFilters({ priceMin: filterPriceMin }); }}
+                                    placeholder="Min Price"
+                                    className="flex-1 min-w-0 w-28 px-3 py-2.5 bg-gray-50 border border-gray-200 rounded-lg text-xs focus:ring-2 focus:ring-accent/20 focus:border-accent focus:outline-none transition-all"
+                                />
+                                <span className="text-gray-300 text-xs flex-shrink-0">–</span>
+                                <input
+                                    type="number"
+                                    value={filterPriceMax}
+                                    suppressHydrationWarning
+                                    onChange={(e) => setFilterPriceMax(e.target.value)}
+                                    onBlur={() => pushFilters({ priceMax: filterPriceMax })}
+                                    onKeyDown={(e) => { if (e.key === "Enter") pushFilters({ priceMax: filterPriceMax }); }}
+                                    placeholder="Max Price"
+                                    className="flex-1 min-w-0 w-28 px-3 py-2.5 bg-gray-50 border border-gray-200 rounded-lg text-xs focus:ring-2 focus:ring-accent/20 focus:border-accent focus:outline-none transition-all"
+                                />
+                            </div>
+
+                            <div className="w-px h-6 bg-gray-200 hidden md:block" />
+
+                            {/* Beds button group */}
+                            <div className="flex items-center gap-1">
+                                <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mr-1">Beds</span>
+                                {["any", "1", "2", "3", "4"].map((b) => (
+                                    <button
+                                        key={b}
+                                        type="button"
+                                        suppressHydrationWarning
+                                        onClick={() => { setFilterBeds(b); pushFilters({ beds: b }); }}
+                                        className={`px-3 py-1.5 text-xs font-semibold rounded-lg transition-all ${
+                                            filterBeds === b
+                                                ? "bg-accent text-primary shadow-sm"
+                                                : "bg-gray-100 text-gray-500 hover:bg-gray-200"
+                                        }`}
+                                    >
+                                        {b === "any" ? "Any" : `${b}+`}
+                                    </button>
+                                ))}
+                            </div>
+
+                            <div className="w-px h-6 bg-gray-200 hidden md:block" />
+
+                            {/* Baths button group */}
+                            <div className="flex items-center gap-1">
+                                <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mr-1">Baths</span>
+                                {["any", "1", "2", "3"].map((b) => (
+                                    <button
+                                        key={b}
+                                        type="button"
+                                        suppressHydrationWarning
+                                        onClick={() => { setFilterBaths(b); pushFilters({ baths: b }); }}
+                                        className={`px-3 py-1.5 text-xs font-semibold rounded-lg transition-all ${
+                                            filterBaths === b
+                                                ? "bg-accent text-primary shadow-sm"
+                                                : "bg-gray-100 text-gray-500 hover:bg-gray-200"
+                                        }`}
+                                    >
+                                        {b === "any" ? "Any" : `${b}+`}
+                                    </button>
+                                ))}
+                            </div>
+
+
+
+                            {/* More Filters toggle */}
+                            <button
+                                type="button"
+                                suppressHydrationWarning
+                                onClick={() => setShowMoreFilters(!showMoreFilters)}
+                                className={`flex items-center gap-1.5 px-3 py-2.5 rounded-lg text-xs font-semibold transition-all ${
+                                    showMoreFilters ? "bg-accent/10 text-primary" : "bg-gray-50 border border-gray-200 text-gray-500 hover:bg-gray-100"
+                                }`}
+                            >
+                                <SlidersHorizontal size={13} />
+                                More
+                            </button>
+
+                            {/* Sort */}
+                            <select
+                                value={sortBy}
+                                suppressHydrationWarning
+                                onChange={(e) => { setSortBy(e.target.value); pushFilters({ sort: e.target.value }); }}
+                                className="ml-auto px-3 py-2.5 bg-gray-50 border border-gray-200 rounded-lg text-xs font-medium outline-none cursor-pointer focus:ring-2 focus:ring-accent/20 focus:border-accent transition-all"
+                            >
+                                <option value="newest">Newest First</option>
+                                <option value="price-asc">Price: Low → High</option>
+                                <option value="price-desc">Price: High → Low</option>
+                            </select>
+                        </div>
+
+                        {/* More Filters Panel */}
+                        {showMoreFilters && (
+                            <div className="flex flex-wrap items-center gap-4 mt-3 pt-3 border-t border-gray-100">
+                                <div className="flex items-center gap-2">
+                                    <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Category</span>
+                                    <select
+                                        value={filterCategory}
+                                        suppressHydrationWarning
+                                        onChange={(e) => { setFilterCategory(e.target.value); pushFilters({ category: e.target.value }); }}
+                                        className="px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-xs font-medium outline-none cursor-pointer focus:ring-2 focus:ring-accent/20 focus:border-accent transition-all"
+                                    >
+                                        <option value="all">All</option>
+                                        <option value="listing">Listings</option>
+                                        <option value="project">Ardhi Safi Projects</option>
+                                    </select>
+                                </div>
+                                <div className="relative flex-1 min-w-[200px]">
+                                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={14} />
+                                    <input
+                                        type="text"
+                                        value={searchQuery}
+                                        suppressHydrationWarning
+                                        onChange={(e) => setSearchQuery(e.target.value)}
+                                        onKeyDown={(e) => { if (e.key === "Enter") pushFilters({ q: searchQuery }); }}
+                                        onBlur={() => pushFilters({ q: searchQuery })}
+                                        placeholder="Keyword search (title, description...)"
+                                        className="w-full pl-9 pr-4 py-2 bg-gray-50 border border-gray-200 rounded-lg text-xs focus:ring-2 focus:ring-accent/20 focus:border-accent focus:outline-none transition-all"
+                                    />
+                                </div>
+                            </div>
+                        )}
 
                         {/* Active filters & view toggle */}
                         <div className="flex items-center justify-between mt-4 pt-4 border-t border-gray-100">
-                            <div className="flex items-center gap-3">
+                            <div className="flex items-center gap-3 flex-wrap">
                                 <p className="text-sm text-text-secondary">
                                     <span className="font-bold text-primary">{pagination.totalCount}</span>{" "}
                                     {pagination.totalCount === 1 ? "property" : "properties"} found
@@ -210,12 +397,13 @@ export default function PropertiesClient({
                                         onClick={clearFilters}
                                         className="inline-flex items-center gap-1 px-3 py-1 bg-red-50 text-red-600 rounded-full text-xs font-semibold hover:bg-red-100 transition-colors"
                                     >
-                                        <X size={12} /> Clear filters
+                                        <X size={12} /> Clear {activeFilterCount} filter{activeFilterCount > 1 ? "s" : ""}
                                     </button>
                                 )}
                             </div>
-                            <div className="hidden md:flex items-center gap-1 bg-gray-100 rounded-lg p-1">
+                            <div className="flex items-center gap-1 bg-gray-100 rounded-lg p-1">
                                 <button
+                                    suppressHydrationWarning
                                     onClick={() => setViewMode("grid")}
                                     className={`p-2 rounded-md transition-colors ${
                                         viewMode === "grid"
@@ -226,6 +414,7 @@ export default function PropertiesClient({
                                     <LayoutGrid size={16} />
                                 </button>
                                 <button
+                                    suppressHydrationWarning
                                     onClick={() => setViewMode("list")}
                                     className={`p-2 rounded-md transition-colors ${
                                         viewMode === "list"
@@ -235,18 +424,50 @@ export default function PropertiesClient({
                                 >
                                     <List size={16} />
                                 </button>
+                                <div className="w-px h-6 bg-gray-200 mx-1" />
+                                <button
+                                    suppressHydrationWarning
+                                    onClick={() => setShowMap(!showMap)}
+                                    className={`p-2 rounded-md transition-colors flex items-center gap-2 text-xs font-bold ${
+                                        showMap
+                                            ? "bg-accent text-primary shadow-sm"
+                                            : "text-gray-400 hover:text-gray-600"
+                                    }`}
+                                >
+                                    <MapIcon size={16} />
+                                    {showMap ? "Hide Map" : "Show Map"}
+                                </button>
                             </div>
                         </div>
                     </motion.div>
                 </div>
             </section>
 
-            {/* Property Grid / List */}
-            <section className="py-16 bg-surface min-h-[400px]">
-                <div className="section-container">
-                    {properties.length > 0 ? (
-                        viewMode === "grid" ? (
-                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            {/* Main Content: Map + List Split View */}
+            <div className={`flex flex-col lg:flex-row ${showMap ? "lg:h-[800px]" : ""}`}>
+                {/* Map Section — sticky while list scrolls */}
+                {showMap && (
+                    <motion.div
+                        initial={{ opacity: 0, x: -50 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        className="w-full lg:w-1/2 lg:sticky lg:top-0 z-10"
+                        style={{ height: showMap ? "50vw" : undefined, minHeight: "360px", maxHeight: "800px" }}
+                    >
+                        <PropertiesMap properties={properties} focusLocation={mapFocus} />
+                    </motion.div>
+                )}
+
+                {/* List Section */}
+                <div className={`flex-1 overflow-y-auto bg-surface py-8 px-4 md:px-8 ${showMap ? "w-full" : "section-container py-16"}`}>
+                    <div className={!showMap ? "section-container" : ""}>
+                        {properties.length > 0 ? (
+                            <div className={`grid gap-6 ${
+                                !showMap 
+                                    ? "grid-cols-1 md:grid-cols-2 lg:grid-cols-3" 
+                                    : viewMode === "grid" 
+                                        ? "grid-cols-1 md:grid-cols-2" 
+                                        : "grid-cols-1"
+                            }`}>
                                 {properties.map((property, i) => (
                                     <motion.div
                                         key={property.id}
@@ -254,8 +475,15 @@ export default function PropertiesClient({
                                         animate={{ opacity: 1, y: 0 }}
                                         transition={{ delay: i * 0.05, duration: 0.4 }}
                                     >
-                                        <Link href={`/properties/${property.id}`} className="block group bg-white rounded-2xl overflow-hidden shadow-md hover:shadow-2xl transition-all duration-500 hover:-translate-y-2">
-                                            <div className="relative h-60 bg-gradient-to-br from-primary/20 to-accent/20 overflow-hidden">
+                                        <Link 
+                                            href={`/properties/${property.id}`} 
+                                            className={`block group bg-white rounded-2xl overflow-hidden shadow-md hover:shadow-2xl transition-all duration-500 hover:-translate-y-2 ${
+                                                viewMode === "list" ? "flex flex-col md:flex-row h-full md:h-64" : ""
+                                            }`}
+                                        >
+                                            <div className={`relative bg-gradient-to-br from-primary/20 to-accent/20 overflow-hidden flex-shrink-0 ${
+                                                viewMode === "list" ? "w-full md:w-64 h-48 md:h-full" : "h-60"
+                                            }`}>
                                                 {property.imageUrl ? (
                                                     <Image
                                                         src={property.imageUrl}
@@ -284,11 +512,6 @@ export default function PropertiesClient({
                                                             ? "For Sale"
                                                             : "For Rent"}
                                                     </span>
-                                                    {property.featured && (
-                                                        <span className="px-3 py-1 rounded-full text-xs font-bold bg-white/90 text-primary backdrop-blur-md">
-                                                            ★ Featured
-                                                        </span>
-                                                    )}
                                                 </div>
 
                                                 {/* Price */}
@@ -304,20 +527,22 @@ export default function PropertiesClient({
                                                 </div>
                                             </div>
 
-                                            <div className="p-6">
-                                                <h3 className="font-heading text-lg text-primary mb-2 group-hover:text-accent transition-colors line-clamp-1">
-                                                    {property.title}
-                                                </h3>
-                                                <p className="text-text-secondary text-sm flex items-center gap-1 mb-3">
-                                                    <MapPin size={14} className="text-accent flex-shrink-0" />
-                                                    {property.location}
-                                                </p>
-                                                <p className="text-text-secondary text-xs mb-4 line-clamp-2">
-                                                    {property.description}
-                                                </p>
+                                            <div className="p-6 flex-1 flex flex-col justify-between">
+                                                <div>
+                                                    <h3 className="font-heading text-lg text-primary mb-2 group-hover:text-accent transition-colors line-clamp-1">
+                                                        {property.title}
+                                                    </h3>
+                                                    <p className="text-text-secondary text-sm flex items-center gap-1 mb-3">
+                                                        <MapPin size={14} className="text-accent flex-shrink-0" />
+                                                        {property.location}
+                                                    </p>
+                                                    <p className="text-text-secondary text-xs mb-4 line-clamp-2">
+                                                        {property.description}
+                                                    </p>
+                                                </div>
 
                                                 <div className="flex items-center justify-between pt-4 border-t border-gray-100">
-                                                    <div className="flex gap-4 text-xs text-text-secondary">
+                                                    <div className="flex flex-wrap gap-x-4 gap-y-2 text-xs text-text-secondary">
                                                         {property.bedrooms && (
                                                             <span className="flex items-center gap-1">
                                                                 <BedDouble size={13} className="text-accent" />
@@ -346,148 +571,60 @@ export default function PropertiesClient({
                                 ))}
                             </div>
                         ) : (
-                            /* List View */
-                            <div className="space-y-4">
-                                {properties.map((property, i) => (
-                                    <motion.div
-                                        key={property.id}
-                                        initial={{ opacity: 0, x: -20 }}
-                                        animate={{ opacity: 1, x: 0 }}
-                                        transition={{ delay: i * 0.04, duration: 0.4 }}
-                                    >
-                                        <Link href={`/properties/${property.id}`} className="flex flex-col md:flex-row bg-white rounded-2xl overflow-hidden shadow-md hover:shadow-xl transition-all group">
-                                            <div className="relative w-full md:w-72 h-52 md:h-auto flex-shrink-0 bg-gradient-to-br from-primary/20 to-accent/20 overflow-hidden">
-                                                {property.imageUrl ? (
-                                                    <Image
-                                                        src={property.imageUrl}
-                                                        alt={property.title}
-                                                        fill
-                                                        className="object-cover transition-transform duration-700 group-hover:scale-105"
-                                                        sizes="(max-width: 768px) 100vw, 288px"
-                                                    />
-                                                ) : (
-                                                    <div className="absolute inset-0 flex items-center justify-center">
-                                                        <Building2 size={40} className="text-primary/20" />
-                                                    </div>
-                                                )}
-                                                <div className="absolute top-4 left-4 z-10 flex gap-2">
-                                                    <span
-                                                        className={`px-3 py-1 rounded-full text-xs font-bold backdrop-blur-md ${
-                                                            property.transaction === "sale"
-                                                                ? "bg-accent/90 text-primary"
-                                                                : "bg-emerald-500/90 text-white"
-                                                        }`}
-                                                    >
-                                                        {property.transaction === "sale"
-                                                            ? "For Sale"
-                                                            : "For Rent"}
-                                                    </span>
-                                                </div>
-                                            </div>
-
-                                            <div className="flex-1 p-6 flex flex-col justify-center">
-                                                <div className="flex items-start justify-between mb-2">
-                                                    <div>
-                                                        <h3 className="font-heading text-lg text-primary group-hover:text-accent transition-colors">
-                                                            {property.title}
-                                                        </h3>
-                                                        <p className="text-text-secondary text-sm flex items-center gap-1 mt-1">
-                                                            <MapPin size={14} className="text-accent" />
-                                                            {property.location}
-                                                        </p>
-                                                    </div>
-                                                    <p className="text-primary font-bold text-lg whitespace-nowrap">
-                                                        {formatPrice(property.price)}
-                                                        {property.transaction === "rent" && (
-                                                            <span className="text-xs font-normal text-text-secondary">
-                                                                /mo
-                                                            </span>
-                                                        )}
-                                                    </p>
-                                                </div>
-                                                <p className="text-text-secondary text-sm line-clamp-2 mb-4">
-                                                    {property.description}
-                                                </p>
-                                                <div className="flex items-center gap-5 text-xs text-text-secondary">
-                                                    <span className="px-2 py-1 bg-gray-100 rounded-md capitalize font-medium">
-                                                        {property.type}
-                                                    </span>
-                                                    {property.bedrooms && (
-                                                        <span className="flex items-center gap-1">
-                                                            <BedDouble size={13} className="text-accent" />
-                                                            {property.bedrooms} Beds
-                                                        </span>
-                                                    )}
-                                                    {property.bathrooms && (
-                                                        <span className="flex items-center gap-1">
-                                                            <Bath size={13} className="text-accent" />
-                                                            {property.bathrooms} Baths
-                                                        </span>
-                                                    )}
-                                                    <span className="flex items-center gap-1">
-                                                        <Maximize size={13} className="text-accent" />
-                                                        {property.area.toLocaleString()} {property.areaUnit}
-                                                    </span>
-                                                </div>
-                                            </div>
-                                        </Link>
-                                    </motion.div>
-                                ))}
-                            </div>
-                        )
-                    ) : (
-                        /* Empty State */
-                        <div className="text-center py-20">
-                            <div className="w-20 h-20 mx-auto mb-6 bg-gray-100 rounded-2xl flex items-center justify-center">
-                                <Building2 size={36} className="text-gray-300" />
-                            </div>
-                            <h3 className="text-xl font-heading text-primary mb-2">No properties found</h3>
-                            <p className="text-text-secondary text-sm mb-6 max-w-md mx-auto">
-                                We couldn&apos;t find any properties matching your criteria. Try adjusting your
-                                search or clearing your filters.
-                            </p>
-                            <button
-                                onClick={clearFilters}
-                                className="inline-flex items-center gap-2 px-6 py-3 bg-accent hover:bg-accent-dark text-primary font-semibold rounded-xl transition-all text-sm"
-                            >
-                                Clear All Filters
-                            </button>
-                        </div>
-                    )}
-                    {/* Pagination */}
-                    {pagination.totalPages > 1 && (
-                        <div className="flex items-center justify-center gap-2 mt-12">
-                            <button
-                                onClick={() => pushFilters({ page: String(pagination.page - 1) })}
-                                disabled={pagination.page <= 1}
-                                className="p-2.5 rounded-xl border border-gray-200 text-primary hover:bg-accent/10 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
-                            >
-                                <ChevronLeft size={18} />
-                            </button>
-                            {Array.from({ length: pagination.totalPages }, (_, i) => i + 1).map((p) => (
+                            /* Empty State */
+                            <div className="text-center py-20">
+                                <div className="w-20 h-20 mx-auto mb-6 bg-gray-100 rounded-2xl flex items-center justify-center">
+                                    <Building2 size={36} className="text-gray-300" />
+                                </div>
+                                <h3 className="text-xl font-heading text-primary mb-2">No properties found</h3>
+                                <p className="text-text-secondary text-sm mb-6 max-w-md mx-auto">
+                                    We couldn&apos;t find any properties matching your criteria. Try adjusting your
+                                    search or clearing your filters.
+                                </p>
                                 <button
-                                    key={p}
-                                    onClick={() => pushFilters({ page: String(p) })}
-                                    className={`w-10 h-10 rounded-xl text-sm font-bold transition-all ${
-                                        p === pagination.page
-                                            ? "bg-accent text-primary shadow-lg shadow-accent/20"
-                                            : "border border-gray-200 text-text-secondary hover:bg-gray-50"
-                                    }`}
+                                    onClick={clearFilters}
+                                    className="inline-flex items-center gap-2 px-6 py-3 bg-accent hover:bg-accent-dark text-primary font-semibold rounded-xl transition-all text-sm"
                                 >
-                                    {p}
+                                    Clear All Filters
                                 </button>
-                            ))}
-                            <button
-                                onClick={() => pushFilters({ page: String(pagination.page + 1) })}
-                                disabled={pagination.page >= pagination.totalPages}
-                                className="p-2.5 rounded-xl border border-gray-200 text-primary hover:bg-accent/10 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
-                            >
-                                <ChevronRight size={18} />
-                            </button>
-                        </div>
-                    )}
+                            </div>
+                        )}
+
+                        {/* Pagination */}
+                        {pagination.totalPages > 1 && (
+                            <div className="flex items-center justify-center gap-2 mt-12 pb-8">
+                                <button
+                                    onClick={() => pushFilters({ page: String(pagination.page - 1) })}
+                                    disabled={pagination.page <= 1}
+                                    className="p-2.5 rounded-xl border border-gray-200 text-primary hover:bg-accent/10 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+                                >
+                                    <ChevronLeft size={18} />
+                                </button>
+                                {Array.from({ length: Math.min(pagination.totalPages, 5) }, (_, i) => i + 1).map((p) => (
+                                    <button
+                                        key={p}
+                                        onClick={() => pushFilters({ page: String(p) })}
+                                        className={`w-10 h-10 rounded-xl text-sm font-bold transition-all ${
+                                            p === pagination.page
+                                                ? "bg-accent text-primary shadow-lg shadow-accent/20"
+                                                : "border border-gray-200 text-text-secondary hover:bg-gray-50"
+                                        }`}
+                                    >
+                                        {p}
+                                    </button>
+                                ))}
+                                <button
+                                    onClick={() => pushFilters({ page: String(pagination.page + 1) })}
+                                    disabled={pagination.page >= pagination.totalPages}
+                                    className="p-2.5 rounded-xl border border-gray-200 text-primary hover:bg-accent/10 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+                                >
+                                    <ChevronRight size={18} />
+                                </button>
+                            </div>
+                        )}
+                    </div>
                 </div>
-            </section>
+            </div>
 
             {/* CTA */}
             <section className="py-20 bg-primary text-white">

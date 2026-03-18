@@ -5,7 +5,7 @@ import {
     Edit,
     Trash2,
     Linkedin,
-    Twitter,
+    Mail,
     Layout
 } from "lucide-react";
 import Link from "next/link";
@@ -56,7 +56,7 @@ export default async function AdminTeamPage() {
 
                             <div className="flex items-center gap-2 mb-4">
                                 {member.linkedin ? <Linkedin size={14} className="text-blue-600" /> : <Linkedin size={14} className="text-gray-300" />}
-                                {member.twitter ? <Twitter size={14} className="text-sky-500" /> : <Twitter size={14} className="text-gray-300" />}
+                                {member.email ? <Mail size={14} className="text-accent" /> : <Mail size={14} className="text-gray-300" />}
                             </div>
 
                             <div className="flex items-center justify-between pt-4 border-t border-gray-50">

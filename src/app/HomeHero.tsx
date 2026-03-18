@@ -4,8 +4,9 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import { motion } from "framer-motion";
-import { MapPin, Search, Home, Building2 } from "lucide-react";
-import { kenyanCounties, propertyTypes, transactionTypes } from "@/data/counties";
+import { Search, Home, Building2, BedDouble, Maximize } from "lucide-react";
+import { transactionTypes } from "@/data/counties";
+import LocationSearch from "@/components/LocationSearch";
 
 interface Slide {
     id: string;
@@ -28,7 +29,7 @@ export default function HomeHero({ slides }: { slides: Slide[] }) {
         if (searchType) params.set("type", searchType);
         if (searchTransaction) params.set("transaction", searchTransaction);
         const query = params.toString();
-        router.push(`/contact${query ? `?${query}` : ""}`);
+        router.push(`/properties${query ? `?${query}` : ""}`);
     }
 
     const displaySlides = slides.length > 0 ? slides : [
@@ -91,7 +92,7 @@ export default function HomeHero({ slides }: { slides: Slide[] }) {
                     <motion.div
                         initial={{ opacity: 0, y: 40 }}
                         animate={{ opacity: 1, y: 0 }}
-                        transition={{ delay: 1.8, duration: 0.8 }}
+                        transition={{ delay: 0.3, duration: 0.8 }}
                     >
                         <p className="text-accent text-sm md:text-base tracking-[0.3em] uppercase mb-4 font-medium drop-shadow-md">
                             Licensed by EARB Kenya
@@ -109,53 +110,67 @@ export default function HomeHero({ slides }: { slides: Slide[] }) {
                     <motion.div
                         initial={{ opacity: 0, y: 30 }}
                         animate={{ opacity: 1, y: 0 }}
-                        transition={{ delay: 2.2, duration: 0.6 }}
+                        transition={{ delay: 0.5, duration: 0.6 }}
                         className="bg-white/10 backdrop-blur-xl rounded-2xl border border-white/15 p-4 md:p-6 shadow-2xl"
                     >
-                        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                            <div className="relative">
-                                <MapPin size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-accent" />
-                                <select
+                        <div className="space-y-4">
+                            {/* Row 1: Location + Buy/Rent + Search */}
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                                <LocationSearch
                                     value={searchCounty}
-                                    onChange={(e) => setSearchCounty(e.target.value)}
-                                    className="w-full pl-10 pr-4 py-3.5 bg-white/10 border border-white/20 rounded-xl text-white text-sm appearance-none focus:border-accent focus:outline-none transition-colors [&>option]:text-black"
+                                    onChange={(val) => setSearchCounty(val)}
+                                    placeholder="Search location..."
+                                    variant="dark"
+                                />
+                                <div className="relative">
+                                    <Building2 size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-accent" />
+                                    <select
+                                        value={searchTransaction}
+                                        suppressHydrationWarning
+                                        onChange={(e) => setSearchTransaction(e.target.value)}
+                                        className="w-full pl-10 pr-4 py-3.5 bg-white/10 border border-white/20 rounded-xl text-white text-sm appearance-none focus:border-accent focus:outline-none transition-colors [&>option]:text-black"
+                                    >
+                                        <option value="">Buy or Rent</option>
+                                        {transactionTypes.map((t) => (
+                                            <option key={t.value} value={t.value}>{t.label}</option>
+                                        ))}
+                                    </select>
+                                </div>
+                                <button 
+                                    onClick={handleSearch} 
+                                    type="button" 
+                                    suppressHydrationWarning
+                                    className="flex items-center justify-center gap-2 bg-accent hover:bg-accent-dark text-primary font-semibold py-3.5 rounded-xl transition-all hover:shadow-lg hover:shadow-accent/30 text-sm"
                                 >
-                                    <option value="">All Counties</option>
-                                    {kenyanCounties.map((c) => (
-                                        <option key={c} value={c}>{c}</option>
-                                    ))}
-                                </select>
+                                    <Search size={18} />
+                                    Search Properties
+                                </button>
                             </div>
-                            <div className="relative">
-                                <Home size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-accent" />
-                                <select
-                                    value={searchType}
-                                    onChange={(e) => setSearchType(e.target.value)}
-                                    className="w-full pl-10 pr-4 py-3.5 bg-white/10 border border-white/20 rounded-xl text-white text-sm appearance-none focus:border-accent focus:outline-none transition-colors [&>option]:text-black"
-                                >
-                                    <option value="">Property Type</option>
-                                    {propertyTypes.map((t) => (
-                                        <option key={t.value} value={t.value}>{t.label}</option>
-                                    ))}
-                                </select>
+
+                            {/* Row 2: Property Type Toggle */}
+                            <div className="flex flex-wrap justify-center gap-2">
+                                {[
+                                    { value: "", label: "All", icon: Home },
+                                    { value: "residential", label: "Residential", icon: BedDouble },
+                                    { value: "commercial", label: "Commercial", icon: Building2 },
+                                    { value: "land", label: "Land", icon: Maximize },
+                                ].map((t) => (
+                                    <button
+                                        key={t.value}
+                                        type="button"
+                                        suppressHydrationWarning
+                                        onClick={() => setSearchType(t.value)}
+                                        className={`flex items-center gap-1.5 px-4 py-2.5 rounded-xl text-xs font-semibold transition-all ${
+                                            searchType === t.value
+                                                ? "bg-accent text-primary shadow-lg shadow-accent/30"
+                                                : "bg-white/10 text-white/70 hover:bg-white/20 border border-white/10"
+                                        }`}
+                                    >
+                                        <t.icon size={14} />
+                                        {t.label}
+                                    </button>
+                                ))}
                             </div>
-                            <div className="relative">
-                                <Building2 size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-accent" />
-                                <select
-                                    value={searchTransaction}
-                                    onChange={(e) => setSearchTransaction(e.target.value)}
-                                    className="w-full pl-10 pr-4 py-3.5 bg-white/10 border border-white/20 rounded-xl text-white text-sm appearance-none focus:border-accent focus:outline-none transition-colors [&>option]:text-black"
-                                >
-                                    <option value="">Buy or Rent</option>
-                                    {transactionTypes.map((t) => (
-                                        <option key={t.value} value={t.value}>{t.label}</option>
-                                    ))}
-                                </select>
-                            </div>
-                            <button onClick={handleSearch} type="button" className="flex items-center justify-center gap-2 bg-accent hover:bg-accent-dark text-primary font-semibold py-3.5 rounded-xl transition-all hover:shadow-lg hover:shadow-accent/30 text-sm">
-                                <Search size={18} />
-                                Search Properties
-                            </button>
                         </div>
                     </motion.div>
 
@@ -165,6 +180,7 @@ export default function HomeHero({ slides }: { slides: Slide[] }) {
                             <button
                                 key={i}
                                 onClick={() => setCurrentSlide(i)}
+                                suppressHydrationWarning
                                 className={`w-2 h-2 rounded-full transition-all duration-300 ${i === currentSlide ? "w-8 bg-accent" : "bg-white/30 hover:bg-white/50"
                                     }`}
                             />

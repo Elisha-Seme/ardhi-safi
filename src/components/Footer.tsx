@@ -1,4 +1,3 @@
-import { useState } from "react";
 import Image from "next/image";
 
 const PhoneIcon = () => (
@@ -31,9 +30,9 @@ const InstagramIcon = () => (
     <rect width="20" height="20" x="2" y="2" rx="5" ry="5"/><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/><line x1="17.5" x2="17.51" y1="6.5" y2="6.5"/>
   </svg>
 );
-const TwitterIcon = () => (
+const TikTokIcon = () => (
   <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-    <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
+    <path d="M19.59 6.69a4.83 4.83 0 01-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 01-2.88 2.5 2.89 2.89 0 01-2.89-2.89 2.89 2.89 0 012.89-2.89c.28 0 .54.04.79.1V9.01a6.27 6.27 0 00-.79-.05 6.34 6.34 0 00-6.34 6.34 6.34 6.34 0 006.34 6.34 6.34 6.34 0 006.33-6.34V8.75a8.18 8.18 0 004.77 1.52V6.84a4.84 4.84 0 01-1-.15z"/>
   </svg>
 );
 
@@ -49,20 +48,21 @@ const contactInfo = {
 };
 
 const quickLinks = [
-  { label: "Home", href: "#" },
-  { label: "About Us", href: "#" },
-  { label: "Our Capabilities", href: "#" },
-  { label: "Projects", href: "#" },
-  { label: "Insights", href: "#" },
-  { label: "Privacy Policy", href: "#" },
-  { label: "Contact Us", href: "#" },
+  { label: "Home", href: "/" },
+  { label: "About Us", href: "/about" },
+  { label: "Our Capabilities", href: "/capabilities" },
+  { label: "Properties", href: "/properties" },
+  { label: "Projects", href: "/projects" },
+  { label: "Insights", href: "/insights" },
+  { label: "Privacy Policy", href: "/privacy" },
+  { label: "Contact Us", href: "/contact" },
 ];
 
 const socialLinks = [
-  { icon: LinkedinIcon, label: "LinkedIn" },
-  { icon: FacebookIcon, label: "Facebook" },
-  { icon: InstagramIcon, label: "Instagram" },
-  { icon: TwitterIcon, label: "Twitter" },
+  { icon: LinkedinIcon, label: "LinkedIn", href: "https://www.linkedin.com/company/ardhi-safi-limited/" },
+  { icon: FacebookIcon, label: "Facebook", href: "https://www.facebook.com/share/1KFH35LHsf/" },
+  { icon: InstagramIcon, label: "Instagram", href: "https://www.instagram.com/ardhisafi" },
+  { icon: TikTokIcon, label: "TikTok", href: "https://www.tiktok.com/@ardhisafi" },
 ];
 
 const services = [
@@ -75,11 +75,7 @@ export default function Footer() {
   return (
     <footer style={{ fontFamily: "'Georgia', serif", background: "#1a3c34", color: "#e5e5e5", width: "100%" }}>
         <div style={{ maxWidth: 1200, margin: "0 auto", padding: "5rem 2rem 4rem" }}>
-          <div style={{
-            display: "grid",
-            gridTemplateColumns: "2fr 1fr 1.3fr 1fr",
-            gap: "2.5rem",
-          }}>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-10">
 
             {/* Brand */}
             <div>
@@ -102,8 +98,8 @@ export default function Footer() {
                 A professional real estate firm established in 2014, licensed by EARB. We provide integrated real estate solutions across Kenya.
               </p>
               <div style={{ display: "flex", gap: 10 }}>
-                {socialLinks.map(({ icon: Icon, label }) => (
-                  <a key={label} href="#" aria-label={label} style={{
+                {socialLinks.map(({ icon: Icon, label, href }) => (
+                  <a key={label} href={href} target="_blank" rel="noopener noreferrer" aria-label={label} style={{
                     width: 36, height: 36, borderRadius: "50%",
                     background: "rgba(255,255,255,0.1)",
                     display: "flex", alignItems: "center", justifyContent: "center",

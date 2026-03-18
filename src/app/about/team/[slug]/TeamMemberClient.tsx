@@ -3,7 +3,7 @@
 import Image from "next/image";
 import { motion } from "framer-motion";
 import Link from "next/link";
-import { ArrowLeft, Linkedin, Twitter, Users } from "lucide-react";
+import { ArrowLeft, Linkedin, Mail, Users } from "lucide-react";
 
 interface TeamMember {
     id: string;
@@ -12,7 +12,7 @@ interface TeamMember {
     bio: string;
     imageUrl: string;
     linkedin: string | null;
-    twitter: string | null;
+    email: string | null;
     order: number;
     active: boolean;
 }
@@ -41,9 +41,9 @@ export default function TeamMemberClient({ member }: TeamMemberClientProps) {
                                         <Linkedin size={18} className="text-white/80 group-hover:text-white" />
                                     </a>
                                 )}
-                                {member.twitter && (
-                                    <a href={member.twitter} target="_blank" rel="noopener noreferrer" className="w-10 h-10 rounded-full bg-white/10 hover:bg-[#1DA1F2] flex items-center justify-center transition-all group">
-                                        <Twitter size={18} className="text-white/80 group-hover:text-white" />
+                                {member.email && (
+                                    <a href={`mailto:${member.email}`} className="w-10 h-10 rounded-full bg-white/10 hover:bg-accent flex items-center justify-center transition-all group">
+                                        <Mail size={18} className="text-white/80 group-hover:text-white" />
                                     </a>
                                 )}
                             </div>

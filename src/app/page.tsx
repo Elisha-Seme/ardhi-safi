@@ -59,8 +59,12 @@ export default async function HomePage() {
             ].map((stat, i) => (
               <div
                 key={i}
-                className={`text-center py-8 px-4 ${i < 3 ? "border-r border-white/10" : ""
-                  }`}
+                className={`text-center py-8 px-4 ${
+                  i === 1 ? "border-b md:border-b-0 border-r border-white/10" :
+                  i === 0 ? "border-b md:border-b-0 border-r border-white/10" :
+                  i === 2 ? "border-r border-white/10" :
+                  ""
+                }`}
               >
                 <p className="text-3xl md:text-4xl font-heading text-accent font-bold">{stat.number}</p>
                 <p className="text-white/60 text-sm mt-1">{stat.label}</p>

@@ -60,7 +60,7 @@ export default async function AboutPage() {
             title: true,
             imageUrl: true,
             linkedin: true,
-            twitter: true,
+            email: true,
             // Map ID to slug for routing compatibility
         }
     });

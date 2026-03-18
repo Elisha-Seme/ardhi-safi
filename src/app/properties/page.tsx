@@ -16,6 +16,12 @@ interface Props {
         q?: string;
         transaction?: string;
         type?: string;
+        category?: string;
+        county?: string;
+        priceMin?: string;
+        priceMax?: string;
+        beds?: string;
+        baths?: string;
         sort?: string;
         page?: string;
     }>;
@@ -23,7 +29,7 @@ interface Props {
 
 export default async function PropertiesPage({ searchParams }: Props) {
     const params = await searchParams;
-    const { q, transaction, type, sort } = params;
+    const { q, transaction, type, category, county, priceMin, priceMax, beds, baths, sort } = params;
     const page = Math.max(1, parseInt(params.page || "1", 10) || 1);
 
     // Build Prisma where clause from search params
@@ -37,13 +43,46 @@ export default async function PropertiesPage({ searchParams }: Props) {
         where.type = type;
     }
 
+    if (category && category !== "all") {
+        where.category = category;
+    }
+
+    if (county) {
+        where.OR = where.OR || [];
+        (where.OR as Prisma.PropertyWhereInput[]).push(
+            { county: { contains: county } },
+            { location: { contains: county } },
+        );
+    }
+
+    if (priceMin) {
+        where.price = { ...(where.price as object || {}), gte: Number(priceMin) };
+    }
+    if (priceMax) {
+        where.price = { ...(where.price as object || {}), lte: Number(priceMax) };
+    }
+
+    if (beds && beds !== "any") {
+        where.bedrooms = { gte: Number(beds) };
+    }
+    if (baths && baths !== "any") {
+        where.bathrooms = { gte: Number(baths) };
+    }
+
     if (q) {
-        where.OR = [
+        const searchConditions: Prisma.PropertyWhereInput[] = [
             { title: { contains: q } },
             { location: { contains: q } },
             { description: { contains: q } },
             { type: { contains: q } },
+            { county: { contains: q } },
         ];
+        if (where.OR) {
+            where.AND = [{ OR: where.OR as Prisma.PropertyWhereInput[] }, { OR: searchConditions }];
+            delete where.OR;
+        } else {
+            where.OR = searchConditions;
+        }
     }
 
     // Build orderBy from sort param
@@ -82,7 +121,12 @@ export default async function PropertiesPage({ searchParams }: Props) {
                 properties={properties}
                 types={allTypes.map((t) => t.type)}
                 locations={allLocations.map((l) => l.location)}
-                initialFilters={{ q: q || "", transaction: transaction || "all", type: type || "all", sort: sort || "newest" }}
+                initialFilters={{
+                    q: q || "", transaction: transaction || "all", type: type || "all",
+                    category: category || "all", county: county || "", sort: sort || "newest",
+                    priceMin: priceMin || "", priceMax: priceMax || "",
+                    beds: beds || "any", baths: baths || "any",
+                }}
                 pagination={{ page, totalPages, totalCount }}
             />
         </Suspense>

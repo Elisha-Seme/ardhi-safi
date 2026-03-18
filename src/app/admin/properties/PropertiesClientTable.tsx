@@ -27,7 +27,8 @@ export default function PropertiesClientTable({ properties, deletePropertyAction
 
     return (
         <div className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
-            <div className="p-6 border-b border-slate-100 flex flex-col sm:flex-row items-center justify-between bg-slate-50/50 gap-4">
+            {/* Header */}
+            <div className="p-4 sm:p-6 border-b border-slate-100 flex flex-col sm:flex-row items-start sm:items-center justify-between bg-slate-50/50 gap-3">
                 <h2 className="font-heading text-primary font-bold">All Properties</h2>
                 <div className="relative w-full sm:w-auto">
                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
@@ -41,7 +42,8 @@ export default function PropertiesClientTable({ properties, deletePropertyAction
                 </div>
             </div>
 
-            <div className="overflow-x-auto overflow-y-auto max-h-[600px]">
+            {/* Desktop Table */}
+            <div className="hidden sm:block overflow-x-auto overflow-y-auto max-h-[600px]">
                 <table className="w-full text-left relative">
                     <thead className="sticky top-0 bg-slate-50 border-b border-slate-200 shadow-sm z-10">
                         <tr>
@@ -85,8 +87,8 @@ export default function PropertiesClientTable({ properties, deletePropertyAction
                                     </td>
                                     <td className="px-6 py-4">
                                         <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider ${property.transaction === 'sale'
-                                                ? 'bg-emerald-100 text-emerald-700'
-                                                : 'bg-blue-100 text-blue-700'
+                                            ? 'bg-emerald-100 text-emerald-700'
+                                            : 'bg-blue-100 text-blue-700'
                                             }`}>
                                             {property.transaction === 'sale' ? 'For Sale' : 'For Rent'}
                                         </span>
@@ -123,6 +125,62 @@ export default function PropertiesClientTable({ properties, deletePropertyAction
                         )}
                     </tbody>
                 </table>
+            </div>
+
+            {/* Mobile Card List */}
+            <div className="sm:hidden divide-y divide-slate-100">
+                {filteredProperties.length > 0 ? filteredProperties.map((property: any) => (
+                    <div key={property.id} className="p-4 flex gap-3 items-start hover:bg-slate-50 transition-colors">
+                        <div className="relative w-16 h-16 rounded-xl bg-slate-100 overflow-hidden flex-shrink-0 border border-slate-200">
+                            {property.imageUrl ? (
+                                <Image src={property.imageUrl} alt="" fill className="object-cover" />
+                            ) : (
+                                <div className="w-full h-full flex items-center justify-center text-slate-300">
+                                    <Building2 size={24} />
+                                </div>
+                            )}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                            <div className="flex items-start justify-between gap-2">
+                                <p className="text-sm font-bold text-primary leading-tight line-clamp-2">{property.title}</p>
+                                <div className="flex items-center gap-1 flex-shrink-0">
+                                    <Link
+                                        href={`/admin/properties/${property.id}/edit`}
+                                        className="p-1.5 text-slate-400 hover:text-accent hover:bg-accent/10 rounded-lg transition-all"
+                                    >
+                                        <Edit2 size={14} />
+                                    </Link>
+                                    <form action={deletePropertyAction}>
+                                        <input type="hidden" name="id" value={property.id} />
+                                        <button type="submit" className="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all">
+                                            <Trash2 size={14} />
+                                        </button>
+                                    </form>
+                                </div>
+                            </div>
+                            <div className="flex items-center gap-1 mt-1 text-slate-400">
+                                <MapPin size={11} className="text-accent flex-shrink-0" />
+                                <span className="text-[11px] truncate">{property.location}</span>
+                            </div>
+                            <div className="flex items-center gap-2 mt-2 flex-wrap">
+                                <span className="text-xs font-bold text-primary">
+                                    {formatPrice(property.price)}
+                                    {property.transaction === 'rent' && <span className="text-[10px] font-normal text-slate-400">/mo</span>}
+                                </span>
+                                <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-wider ${property.transaction === 'sale' ? 'bg-emerald-100 text-emerald-700' : 'bg-blue-100 text-blue-700'}`}>
+                                    {property.transaction === 'sale' ? 'For Sale' : 'For Rent'}
+                                </span>
+                                {property.featured && (
+                                    <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-wider bg-accent/20 text-primary">
+                                        Featured
+                                    </span>
+                                )}
+                            </div>
+                        </div>
+                    </div>
+                )) : (
+                    <div className="px-6 py-10 text-center text-slate-500 text-sm">No properties found.</div>
+                )}
             </div>
         </div>
     );

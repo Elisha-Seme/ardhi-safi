@@ -5,6 +5,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { Search, Eye, Edit, Trash2, FileText, User as UserIcon, Calendar } from "lucide-react";
 import { deleteBlog } from "./actions";
+import { blogCategories } from "@/data/blogs";
 
 export default function BlogsClientTable({ blogs }: { blogs: any[] }) {
     const [searchQuery, setSearchQuery] = useState("");
@@ -42,15 +43,16 @@ export default function BlogsClientTable({ blogs }: { blogs: any[] }) {
                         className="w-full md:w-auto px-4 py-3 bg-gray-50 border border-transparent rounded-xl text-sm font-medium outline-none cursor-pointer"
                     >
                         <option>All Categories</option>
-                        <option>Market Analysis</option>
-                        <option>Buying Guide</option>
-                        <option>Legal</option>
+                        {blogCategories.filter(c => c !== "All").map(cat => (
+                            <option key={cat}>{cat}</option>
+                        ))}
                     </select>
                 </div>
             </div>
 
             <div className="bg-white rounded-3xl shadow-sm border border-gray-100 overflow-hidden">
-                <div className="overflow-x-auto overflow-y-auto max-h-[600px]">
+                {/* Desktop Table */}
+                <div className="hidden sm:block overflow-x-auto overflow-y-auto max-h-[600px]">
                     <table className="w-full text-left relative">
                         <thead className="sticky top-0 bg-gray-50 border-b border-gray-100 shadow-sm z-10">
                             <tr>

@@ -22,6 +22,10 @@ export const metadata: Metadata = {
     default: "Ardhi Safi | Clean Land, Clear Titles — Kenya Real Estate",
     template: "%s | Ardhi Safi"
   },
+  icons: {
+    icon: "/images/brand/icon-light.jpeg",
+    apple: "/images/brand/icon-light.jpeg",
+  },
   description:
     "Ardhi Safi Limited is a licensed Kenyan real estate firm providing property sales, letting, management, and investment advisory services. Registered by EARB (Estate Agents Registration Board).",
   keywords: [

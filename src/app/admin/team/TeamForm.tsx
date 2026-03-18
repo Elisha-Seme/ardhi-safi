@@ -15,6 +15,7 @@ import {
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import ImageUpload from "@/components/admin/ImageUpload";
 import type { ActionResponse } from "@/lib/action-response";
 
 interface TeamFormProps {
@@ -25,7 +26,7 @@ interface TeamFormProps {
         bio: string;
         imageUrl: string;
         linkedin: string | null;
-        twitter: string | null;
+        email: string | null;
         order: number;
         active: boolean;
     };
@@ -117,15 +118,9 @@ export default function TeamForm({ initialData, mode }: TeamFormProps) {
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                         <div className="space-y-4">
                             <label className="text-xs font-bold uppercase tracking-widest text-text-secondary flex items-center gap-2">
-                                <ImageIcon size={14} className="text-accent" /> Profile Image URL
+                                <ImageIcon size={14} className="text-accent" /> Profile Image
                             </label>
-                            <input
-                                name="imageUrl"
-                                required
-                                defaultValue={initialData?.imageUrl}
-                                placeholder="e.g., /team/namutila.jpg"
-                                className="w-full px-6 py-4 bg-gray-50 border border-transparent focus:border-accent focus:bg-white rounded-2xl outline-none transition-all text-sm"
-                            />
+                            <ImageUpload name="imageUrl" defaultValue={initialData?.imageUrl} required />
                         </div>
                         <div className="space-y-4">
                             <label className="text-xs font-bold uppercase tracking-widest text-text-secondary flex items-center gap-2">
@@ -169,12 +164,13 @@ export default function TeamForm({ initialData, mode }: TeamFormProps) {
                         </div>
                         <div className="space-y-4">
                             <label className="text-xs font-bold uppercase tracking-widest text-text-secondary flex items-center gap-2">
-                                <LinkIcon size={14} className="text-accent" /> Twitter URL (Optional)
+                                <LinkIcon size={14} className="text-accent" /> Company Email (Optional)
                             </label>
                             <input
-                                name="twitter"
-                                defaultValue={initialData?.twitter || ""}
-                                placeholder="https://twitter.com/..."
+                                name="email"
+                                type="email"
+                                defaultValue={initialData?.email || ""}
+                                placeholder="name@ardhisafi.co.ke"
                                 className="w-full px-6 py-4 bg-gray-50 border border-transparent focus:border-accent focus:bg-white rounded-2xl outline-none transition-all text-sm"
                             />
                         </div>

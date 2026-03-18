@@ -51,7 +51,7 @@ model TeamMember {
   bio       String
   imageUrl  String
   linkedin  String?
-  twitter   String?
+  email     String?
   order     Int     @default(0)
   active    Boolean @default(true)
 }
@@ -64,6 +64,7 @@ model Testimonial {
   category String
   rating   Int     @default(5)
   active   Boolean @default(true)
+  source   String  @default("manual") // "manual" | "google"
 }
 
 model GalleryItem {
@@ -94,15 +95,21 @@ model Property {
   title       String
   description String
   location    String
+  county      String?
+  subcounty   String?
+  ward        String?
   price       Float
   transaction String   // 'sale' or 'rent'
   type        String   // 'residential', 'commercial', 'land'
+  category    String   @default("listing") // 'listing' or 'project'
   bedrooms    Int?
   bathrooms   Int?
   area        Float
   areaUnit    String   // 'sqft', 'acres', etc.
   featured    Boolean  @default(false)
   imageUrl    String?
+  latitude    Float?
+  longitude   Float?
   active      Boolean  @default(true)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt

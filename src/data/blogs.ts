@@ -77,9 +77,13 @@ export const sampleBlogPosts: BlogPost[] = [
 
 export const blogCategories = [
     "All",
-    "Market Analysis",
-    "Buying Guide",
+    "Property Selling",
+    "Property Buying",
+    "Renting",
     "Property Management",
-    "Legal",
-    "Investment",
+    "Property Development",
+    "Property Financing",
+    "Property Investing",
+    "Proptech",
+    "Property Laws & Regulations",
 ];

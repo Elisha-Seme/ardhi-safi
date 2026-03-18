@@ -29,7 +29,7 @@ interface TestimonialFormProps {
     mode: "create" | "edit";
 }
 
-const CATEGORIES = ["landlord", "tenant", "buyer", "seller", "investor"];
+const CATEGORIES = ["landlord", "tenant", "buyer", "seller", "investor", "vendor", "supplier"];
 
 export default function TestimonialForm({ initialData, mode }: TestimonialFormProps) {
     const router = useRouter();

@@ -1,11 +1,15 @@
 "use client";
 
 import { useState } from "react";
+import dynamic from "next/dynamic";
 import Link from "next/link";
 import { motion } from "framer-motion";
-import { Phone, Mail, MapPin, Send, Building2 } from "lucide-react";
+import { Phone, Mail, MapPin, Send, Building2, Navigation } from "lucide-react";
 import { kenyanCounties } from "@/data/counties";
 import { submitLead } from "./actions";
+
+
+const MapEmbed = dynamic(() => import("@/components/MapEmbed"), { ssr: false });
 
 const fadeInUp = {
     initial: { opacity: 0, y: 30 },
@@ -265,24 +269,23 @@ export default function ContactPage() {
                                         Nairobi, Kenya
                                     </p>
                                 </div>
+                                <a
+                                    href="https://www.google.com/maps/dir/?api=1&destination=-1.3019660481003512,36.82220056855264"
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="inline-flex items-center gap-2 text-xs font-semibold text-accent hover:underline mt-1"
+                                >
+                                    <Navigation size={13} /> Get Directions
+                                </a>
                             </motion.div>
                         </div>
                     </div>
                 </div>
             </section>
 
-            {/* Google Map */}
-            <section className="h-96 bg-gray-200 relative">
-                <iframe
-                    src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3988.818!2d36.817!3d-1.2921!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x0%3A0x0!2zMcKwMTcnMzEuNiJTIDM2wrA0OScwMS4yIkU!5e0!3m2!1sen!2ske!4v1600000000000!5m2!1sen!2ske"
-                    width="100%"
-                    height="100%"
-                    style={{ border: 0 }}
-                    allowFullScreen
-                    loading="lazy"
-                    referrerPolicy="no-referrer-when-downgrade"
-                    title="Ardhi Safi Location - Upper Hill, Nairobi"
-                />
+            {/* Leaflet Map */}
+            <section className="h-96 relative">
+                <MapEmbed />
             </section>
         </div>
     );

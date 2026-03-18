@@ -12,15 +12,21 @@ export async function createProperty(formData: FormData): Promise<ActionResponse
     const title = formData.get("title") as string;
     const description = formData.get("description") as string;
     const location = formData.get("location") as string;
+    const county = (formData.get("county") as string) || null;
+    const subcounty = (formData.get("subcounty") as string) || null;
+    const ward = (formData.get("ward") as string) || null;
     const price = Number(formData.get("price"));
     const transaction = formData.get("transaction") as string;
     const type = formData.get("type") as string;
+    const category = (formData.get("category") as string) || "listing";
     const bedrooms = Number(formData.get("bedrooms")) || null;
     const bathrooms = Number(formData.get("bathrooms")) || null;
     const area = Number(formData.get("area"));
     const areaUnit = formData.get("areaUnit") as string;
     const featured = formData.get("featured") === "true";
     const imageUrl = (formData.get("imageUrl") as string) || null;
+    const latitude = formData.get("latitude") ? Number(formData.get("latitude")) : null;
+    const longitude = formData.get("longitude") ? Number(formData.get("longitude")) : null;
     const active = formData.get("active") !== "false";
 
     const fieldError = validateRequired(
@@ -36,8 +42,10 @@ export async function createProperty(formData: FormData): Promise<ActionResponse
     try {
         await prisma.property.create({
             data: {
-                title, description, location, price, transaction, type,
-                bedrooms, bathrooms, area, areaUnit, featured, imageUrl, active,
+                title, description, location, county, subcounty, ward,
+                price, transaction, type, category,
+                bedrooms, bathrooms, area, areaUnit, featured, imageUrl,
+                latitude, longitude, active,
             },
         });
 
@@ -57,15 +65,21 @@ export async function updateProperty(id: string, formData: FormData): Promise<Ac
     const title = formData.get("title") as string;
     const description = formData.get("description") as string;
     const location = formData.get("location") as string;
+    const county = (formData.get("county") as string) || null;
+    const subcounty = (formData.get("subcounty") as string) || null;
+    const ward = (formData.get("ward") as string) || null;
     const price = Number(formData.get("price"));
     const transaction = formData.get("transaction") as string;
     const type = formData.get("type") as string;
+    const category = (formData.get("category") as string) || "listing";
     const bedrooms = Number(formData.get("bedrooms")) || null;
     const bathrooms = Number(formData.get("bathrooms")) || null;
     const area = Number(formData.get("area"));
     const areaUnit = formData.get("areaUnit") as string;
     const featured = formData.get("featured") === "true";
     const imageUrl = (formData.get("imageUrl") as string) || null;
+    const latitude = formData.get("latitude") ? Number(formData.get("latitude")) : null;
+    const longitude = formData.get("longitude") ? Number(formData.get("longitude")) : null;
     const active = formData.get("active") !== "false";
 
     const fieldError = validateRequired(
@@ -82,8 +96,10 @@ export async function updateProperty(id: string, formData: FormData): Promise<Ac
         await prisma.property.update({
             where: { id },
             data: {
-                title, description, location, price, transaction, type,
-                bedrooms, bathrooms, area, areaUnit, featured, imageUrl, active,
+                title, description, location, county, subcounty, ward,
+                price, transaction, type, category,
+                bedrooms, bathrooms, area, areaUnit, featured, imageUrl,
+                latitude, longitude, active,
             },
         });
 
