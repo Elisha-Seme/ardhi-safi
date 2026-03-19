@@ -17,40 +17,50 @@ const ALLOWED_TYPES = new Set([
 ]);
 
 export async function POST(req: NextRequest) {
-    const session = await auth();
-    if (!session) {
-        return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    try {
+        const session = await auth();
+        if (!session) {
+            return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+        }
+
+        if (!process.env.CLOUDINARY_CLOUD_NAME || !process.env.CLOUDINARY_API_KEY || !process.env.CLOUDINARY_API_SECRET) {
+            return NextResponse.json({ error: "Cloudinary not configured" }, { status: 500 });
+        }
+
+        const formData = await req.formData();
+        const file = formData.get("file") as File | null;
+
+        if (!file) {
+            return NextResponse.json({ error: "No file provided" }, { status: 400 });
+        }
+
+        if (!ALLOWED_TYPES.has(file.type)) {
+            return NextResponse.json({ error: "Invalid file type. Allowed: JPEG, PNG, WebP, AVIF, GIF" }, { status: 400 });
+        }
+
+        if (file.size > 5 * 1024 * 1024) {
+            return NextResponse.json({ error: "File too large (max 5MB)" }, { status: 400 });
+        }
+
+        const bytes = await file.arrayBuffer();
+        const buffer = Buffer.from(bytes);
+
+        const result = await new Promise<{ secure_url: string }>((resolve, reject) => {
+            cloudinary.uploader
+                .upload_stream(
+                    { folder: "ardhi-safi", resource_type: "image" },
+                    (error, result) => {
+                        if (error || !result) reject(error || new Error("Cloudinary upload failed"));
+                        else resolve(result);
+                    }
+                )
+                .end(buffer);
+        });
+
+        return NextResponse.json({ url: result.secure_url });
+    } catch (err) {
+        console.error("Upload error:", err);
+        const message = err instanceof Error ? err.message : "Upload failed";
+        return NextResponse.json({ error: message }, { status: 500 });
     }
-
-    const formData = await req.formData();
-    const file = formData.get("file") as File | null;
-
-    if (!file) {
-        return NextResponse.json({ error: "No file provided" }, { status: 400 });
-    }
-
-    if (!ALLOWED_TYPES.has(file.type)) {
-        return NextResponse.json({ error: "Invalid file type. Allowed: JPEG, PNG, WebP, AVIF, GIF" }, { status: 400 });
-    }
-
-    if (file.size > 5 * 1024 * 1024) {
-        return NextResponse.json({ error: "File too large (max 5MB)" }, { status: 400 });
-    }
-
-    const bytes = await file.arrayBuffer();
-    const buffer = Buffer.from(bytes);
-
-    const result = await new Promise<{ secure_url: string }>((resolve, reject) => {
-        cloudinary.uploader
-            .upload_stream(
-                { folder: "ardhi-safi", resource_type: "image" },
-                (error, result) => {
-                    if (error || !result) reject(error || new Error("Upload failed"));
-                    else resolve(result);
-                }
-            )
-            .end(buffer);
-    });
-
-    return NextResponse.json({ url: result.secure_url });
 }
