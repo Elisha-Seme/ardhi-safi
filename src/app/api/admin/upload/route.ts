@@ -1,12 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
-import { v2 as cloudinary } from "cloudinary";
-
-cloudinary.config({
-    cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
-    api_key: process.env.CLOUDINARY_API_KEY,
-    api_secret: process.env.CLOUDINARY_API_SECRET,
-});
+import { writeFile, mkdir } from "fs/promises";
+import { join } from "path";
+import { existsSync } from "fs";
+import { put } from "@vercel/blob";
 
 const ALLOWED_TYPES = new Set([
     "image/jpeg",
@@ -16,15 +13,13 @@ const ALLOWED_TYPES = new Set([
     "image/gif",
 ]);
 
+const UPLOAD_DIR = join(process.cwd(), "public", "uploads");
+
 export async function POST(req: NextRequest) {
     try {
         const session = await auth();
         if (!session) {
             return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-        }
-
-        if (!process.env.CLOUDINARY_CLOUD_NAME || !process.env.CLOUDINARY_API_KEY || !process.env.CLOUDINARY_API_SECRET) {
-            return NextResponse.json({ error: "Cloudinary not configured" }, { status: 500 });
         }
 
         const formData = await req.formData();
@@ -38,26 +33,39 @@ export async function POST(req: NextRequest) {
             return NextResponse.json({ error: "Invalid file type. Allowed: JPEG, PNG, WebP, AVIF, GIF" }, { status: 400 });
         }
 
-        if (file.size > 5 * 1024 * 1024) {
-            return NextResponse.json({ error: "File too large (max 5MB)" }, { status: 400 });
+        if (file.size > 10 * 1024 * 1024) { // 10MB limit
+            return NextResponse.json({ error: "File too large (max 10MB)" }, { status: 400 });
         }
 
+        // --- Vercel Blob (Production) ---
+        // If the token is present, we prefer Vercel Blob for universal access
+        if (process.env.BLOB_READ_WRITE_TOKEN) {
+            const blob = await put(file.name, file, {
+                access: 'public',
+            });
+            return NextResponse.json({ url: blob.url });
+        }
+
+        // --- Local Filesystem Fallback (Development) ---
         const bytes = await file.arrayBuffer();
         const buffer = Buffer.from(bytes);
 
-        const result = await new Promise<{ secure_url: string }>((resolve, reject) => {
-            cloudinary.uploader
-                .upload_stream(
-                    { folder: "ardhi-safi", resource_type: "image" },
-                    (error, result) => {
-                        if (error || !result) reject(error || new Error("Cloudinary upload failed"));
-                        else resolve(result);
-                    }
-                )
-                .end(buffer);
-        });
+        // Ensure upload directory exists
+        if (!existsSync(UPLOAD_DIR)) {
+            await mkdir(UPLOAD_DIR, { recursive: true });
+        }
 
-        return NextResponse.json({ url: result.secure_url });
+        // Generate unique filename
+        const timestamp = Date.now();
+        const originalName = file.name.replace(/\s+/g, "-").toLowerCase();
+        const fileName = `${timestamp}-${originalName}`;
+        const path = join(UPLOAD_DIR, fileName);
+
+        // Write file to disk
+        await writeFile(path, buffer);
+
+        // Return the public URL
+        return NextResponse.json({ url: `/uploads/${fileName}` });
     } catch (err) {
         console.error("Upload error:", err);
         const message = err instanceof Error ? err.message : "Upload failed";
