@@ -8,6 +8,8 @@ import { formatPrice } from "@/data/properties";
 import HomeHero from "./HomeHero";
 import HomeInsightsPreview from "./HomeInsightsPreview";
 
+export const dynamic = 'force-dynamic';
+
 export const metadata = {
   title: "Ardhi Safi Limited | Your Trusted Real Estate Partner in Kenya",
   description: "Shelter for all. Clear titles. Professional real estate services across all 47 counties in Kenya. Buy, sell, and rent premium properties.",

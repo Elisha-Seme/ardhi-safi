@@ -4,6 +4,8 @@ import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 import { notFound } from "next/navigation";
 
+export const dynamic = 'force-dynamic';
+
 export const metadata = {
     title: "Edit Property | Ardhi Safi Admin",
 };

@@ -19,6 +19,8 @@ import {
 import prisma from "@/lib/prisma";
 import AboutTeamGrid from "./AboutTeamGrid";
 
+export const dynamic = 'force-dynamic';
+
 export const metadata = {
     title: "About Us | Ardhi Safi Limited",
     description: "Learn about Ardhi Safi Limited, our history, mission, and the professional team driving real estate excellence in Kenya.",

@@ -1,6 +1,8 @@
 import prisma from "@/lib/prisma";
 import PropertyManagementClient from "./PropertyManagementClient";
 
+export const dynamic = 'force-dynamic';
+
 export const metadata = {
     title: "Property Management | Ardhi Safi Limited",
     description: "Professional property management services in Kenya with transparency, precision, and care.",

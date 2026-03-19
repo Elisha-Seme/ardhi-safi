@@ -12,6 +12,8 @@ import { deleteGalleryItem } from "./actions";
 import { revalidatePath } from "next/cache";
 import { format } from "date-fns";
 
+export const dynamic = 'force-dynamic';
+
 export default async function AdminGalleryPage() {
     const items = await prisma.galleryItem.findMany({
         orderBy: { date: 'desc' }

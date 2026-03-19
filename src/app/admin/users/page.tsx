@@ -7,6 +7,8 @@ import { revalidatePath } from "next/cache";
 import { auth } from "@/auth";
 import ChangePasswordButton from "./ChangePasswordButton";
 
+export const dynamic = 'force-dynamic';
+
 export const metadata = {
     title: "Manage Users | Ardhi Safi Admin",
 };

@@ -3,6 +3,8 @@ import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import PropertyDetailClient from "./PropertyDetailClient";
 
+export const dynamic = 'force-dynamic';
+
 interface Props {
     params: Promise<{ id: string }>;
 }

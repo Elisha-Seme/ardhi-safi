@@ -15,6 +15,8 @@ import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import BlogsClientTable from "./BlogsClientTable";
 
+export const dynamic = 'force-dynamic';
+
 export default async function AdminBlogsPage() {
     const blogs = await prisma.blogPost.findMany({
         orderBy: { createdAt: 'desc' }

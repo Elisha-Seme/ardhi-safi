@@ -1,6 +1,7 @@
 import prisma from "@/lib/prisma";
 import InsightsList from "./InsightsList";
 
+export const dynamic = 'force-dynamic';
 
 export const metadata = {
     title: "Insights & Market Analysis | Ardhi Safi Limited",

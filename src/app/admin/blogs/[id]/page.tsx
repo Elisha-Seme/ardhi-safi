@@ -2,6 +2,8 @@ import prisma from "@/lib/prisma";
 import BlogForm from "../BlogForm";
 import { notFound } from "next/navigation";
 
+export const dynamic = 'force-dynamic';
+
 export default async function EditBlogPage({ params }: { params: Promise<{ id: string }> }) {
     const { id } = await params;
     const blog = await prisma.blogPost.findUnique({

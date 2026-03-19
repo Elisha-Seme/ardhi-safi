@@ -13,6 +13,8 @@ import Image from "next/image";
 import { deleteHeroSlide } from "./actions";
 import { revalidatePath } from "next/cache";
 
+export const dynamic = 'force-dynamic';
+
 export default async function AdminHeroPage() {
     const slides = await prisma.heroSlide.findMany({
         orderBy: { order: 'asc' }

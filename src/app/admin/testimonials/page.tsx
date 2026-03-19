@@ -12,6 +12,8 @@ import Link from "next/link";
 import { deleteTestimonial } from "./actions";
 import { revalidatePath } from "next/cache";
 
+export const dynamic = 'force-dynamic';
+
 export default async function AdminTestimonialsPage() {
     const testimonials = await prisma.testimonial.findMany({
         orderBy: { id: 'desc' }

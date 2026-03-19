@@ -4,6 +4,8 @@ import { Plus, Building2, Home, Map } from "lucide-react";
 import { deleteProperty } from "./actions";
 import PropertiesClientTable from "./PropertiesClientTable";
 
+export const dynamic = 'force-dynamic';
+
 export const metadata = {
     title: "Manage Properties | Ardhi Safi Admin",
 };

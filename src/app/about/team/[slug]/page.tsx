@@ -3,6 +3,8 @@ import prisma from "@/lib/prisma";
 import { notFound } from "next/navigation";
 import TeamMemberClient from "./TeamMemberClient";
 
+export const dynamic = 'force-dynamic';
+
 interface Props {
     params: Promise<{ slug: string }>;
 }

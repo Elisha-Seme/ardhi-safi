@@ -1,6 +1,8 @@
 import prisma from "@/lib/prisma";
 import PropertyInvestmentClient from "./PropertyInvestmentClient";
 
+export const dynamic = 'force-dynamic';
+
 export const metadata = {
     title: "Property Investment | Ardhi Safi Limited",
     description: "Strategic property investment advisory services in Kenya. Unlock value and drive long-term returns.",

@@ -52,3 +52,5 @@ next-env.d.ts
 # Source media files (not part of the app)
 *.mp4
 *.docx
+
+.vercel

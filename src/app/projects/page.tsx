@@ -1,6 +1,8 @@
 import prisma from "@/lib/prisma";
 import ProjectsGallery from "./ProjectsGallery";
 
+export const dynamic = 'force-dynamic';
+
 export const metadata = {
     title: "Projects Portfolio | Ardhi Safi Limited",
     description: "Explore our portfolio of premium real estate projects and properties across Kenya.",

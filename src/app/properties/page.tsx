@@ -4,6 +4,8 @@ import { Prisma } from "@prisma/client";
 import type { Metadata } from "next";
 import PropertiesClient from "./PropertiesClient";
 
+export const dynamic = 'force-dynamic';
+
 export const metadata: Metadata = {
     title: "Properties | Ardhi Safi Limited",
     description: "Browse premium properties for sale and rent across all 47 counties in Kenya. Find your perfect home, office, or investment property.",

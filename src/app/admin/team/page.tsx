@@ -13,6 +13,8 @@ import Image from "next/image";
 import { deleteTeamMember } from "./actions";
 import { revalidatePath } from "next/cache";
 
+export const dynamic = 'force-dynamic';
+
 export default async function AdminTeamPage() {
     const team = await prisma.teamMember.findMany({
         orderBy: { order: 'asc' }
