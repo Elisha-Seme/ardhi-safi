@@ -3,7 +3,6 @@
 import { useState, useRef } from "react";
 import Image from "next/image";
 import { Upload, X, Loader2, ImageIcon } from "lucide-react";
-import { upload } from "@vercel/blob/client";
 
 interface ImageUploadProps {
     name: string;
@@ -23,6 +22,27 @@ export default function ImageUpload({ name, defaultValue, required, onChange }: 
         onChange?.(newUrl);
     }
 
+    async function uploadViaBlob(file: File): Promise<string> {
+        const { upload } = await import("@vercel/blob/client");
+        const blob = await upload(file.name, file, {
+            access: 'public',
+            handleUploadUrl: '/api/admin/upload',
+        });
+        return blob.url;
+    }
+
+    async function uploadViaFormData(file: File): Promise<string> {
+        const formData = new FormData();
+        formData.append("file", file);
+        const res = await fetch("/api/admin/upload", {
+            method: "POST",
+            body: formData,
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || "Upload failed");
+        return data.url;
+    }
+
     async function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
         const file = e.target.files?.[0];
         if (!file) return;
@@ -31,31 +51,16 @@ export default function ImageUpload({ name, defaultValue, required, onChange }: 
         setError("");
 
         try {
-            // Try Vercel Blob client-side upload first
-            // This will call our API route for the token exchange
-            const blob = await upload(file.name, file, {
-                access: 'public',
-                handleUploadUrl: '/api/admin/upload',
-            });
-            updateUrl(blob.url);
-        } catch {
-            // If Vercel Blob fails (e.g., no token in dev), fall back to local FormData upload
-            try {
-                const formData = new FormData();
-                formData.append("file", file);
-                const res = await fetch("/api/admin/upload", {
-                    method: "POST",
-                    body: formData,
-                });
-                const data = await res.json();
-                if (res.ok) {
-                    updateUrl(data.url);
-                } else {
-                    setError(data.error || "Upload failed");
-                }
-            } catch {
-                setError("Upload failed. Please try again.");
-            }
+            // Use NEXT_PUBLIC env var to decide upload strategy
+            // This avoids the Blob client hanging in local dev
+            const useBlob = process.env.NEXT_PUBLIC_USE_BLOB === "true";
+            const resultUrl = useBlob
+                ? await uploadViaBlob(file)
+                : await uploadViaFormData(file);
+            updateUrl(resultUrl);
+        } catch (err) {
+            const message = err instanceof Error ? err.message : "Upload failed";
+            setError(message);
         } finally {
             setUploading(false);
         }
