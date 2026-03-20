@@ -3,6 +3,7 @@
 import { useState, useRef } from "react";
 import Image from "next/image";
 import { Upload, X, Loader2, ImageIcon } from "lucide-react";
+import { upload } from "@vercel/blob/client";
 
 interface ImageUploadProps {
     name: string;
@@ -29,22 +30,32 @@ export default function ImageUpload({ name, defaultValue, required, onChange }: 
         setUploading(true);
         setError("");
 
-        const formData = new FormData();
-        formData.append("file", file);
-
         try {
-            const res = await fetch("/api/admin/upload", {
-                method: "POST",
-                body: formData,
+            // Try Vercel Blob client-side upload first
+            // This will call our API route for the token exchange
+            const blob = await upload(file.name, file, {
+                access: 'public',
+                handleUploadUrl: '/api/admin/upload',
             });
-            const data = await res.json();
-            if (res.ok) {
-                updateUrl(data.url);
-            } else {
-                setError(data.error || "Upload failed");
-            }
+            updateUrl(blob.url);
         } catch {
-            setError("Upload failed");
+            // If Vercel Blob fails (e.g., no token in dev), fall back to local FormData upload
+            try {
+                const formData = new FormData();
+                formData.append("file", file);
+                const res = await fetch("/api/admin/upload", {
+                    method: "POST",
+                    body: formData,
+                });
+                const data = await res.json();
+                if (res.ok) {
+                    updateUrl(data.url);
+                } else {
+                    setError(data.error || "Upload failed");
+                }
+            } catch {
+                setError("Upload failed. Please try again.");
+            }
         } finally {
             setUploading(false);
         }

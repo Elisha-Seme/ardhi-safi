@@ -1,6 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
-import { put } from "@vercel/blob";
+import { handleUpload, type HandleUploadBody } from "@vercel/blob/client";
+
+// This route handles TWO modes:
+// 1. Vercel Blob client-side upload (token exchange) — used in production
+// 2. Local filesystem upload (direct POST) — used in development
 
 const ALLOWED_TYPES = new Set([
     "image/jpeg",
@@ -10,13 +14,6 @@ const ALLOWED_TYPES = new Set([
     "image/gif",
 ]);
 
-// Increase the body size limit for file uploads on Vercel
-export const config = {
-    api: {
-        bodyParser: false,
-    },
-};
-
 export async function POST(req: NextRequest) {
     try {
         const session = await auth();
@@ -24,6 +21,30 @@ export async function POST(req: NextRequest) {
             return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
         }
 
+        const contentType = req.headers.get("content-type") || "";
+
+        // --- Vercel Blob Client Upload (token exchange) ---
+        if (process.env.BLOB_READ_WRITE_TOKEN && contentType.includes("application/json")) {
+            const body = (await req.json()) as HandleUploadBody;
+            const jsonResponse = await handleUpload({
+                body,
+                request: req,
+                onBeforeGenerateToken: async (pathname) => {
+                    // Validate file type from pathname extension
+                    return {
+                        allowedContentTypes: [...ALLOWED_TYPES],
+                        maximumSizeInBytes: 10 * 1024 * 1024, // 10MB
+                        tokenPayload: JSON.stringify({ pathname }),
+                    };
+                },
+                onUploadCompleted: async () => {
+                    // Optional: save reference to DB, log, etc.
+                },
+            });
+            return NextResponse.json(jsonResponse);
+        }
+
+        // --- Local Filesystem Upload (Development fallback) ---
         const formData = await req.formData();
         const file = formData.get("file") as File | null;
 
@@ -32,25 +53,13 @@ export async function POST(req: NextRequest) {
         }
 
         if (!ALLOWED_TYPES.has(file.type)) {
-            return NextResponse.json({ error: "Invalid file type. Allowed: JPEG, PNG, WebP, AVIF, GIF" }, { status: 400 });
+            return NextResponse.json({ error: "Invalid file type" }, { status: 400 });
         }
 
         if (file.size > 10 * 1024 * 1024) {
             return NextResponse.json({ error: "File too large (max 10MB)" }, { status: 400 });
         }
 
-        // --- Vercel Blob (Production) ---
-        if (process.env.BLOB_READ_WRITE_TOKEN) {
-            const timestamp = Date.now();
-            const safeName = file.name.replace(/\s+/g, "-").toLowerCase();
-            const blob = await put(`uploads/${timestamp}-${safeName}`, file, {
-                access: 'public',
-                addRandomSuffix: false,
-            });
-            return NextResponse.json({ url: blob.url });
-        }
-
-        // --- Local Filesystem Fallback (Development) ---
         const { writeFile, mkdir } = await import("fs/promises");
         const { existsSync } = await import("fs");
         const { join } = await import("path");
