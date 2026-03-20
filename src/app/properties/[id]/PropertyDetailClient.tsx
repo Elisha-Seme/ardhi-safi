@@ -3,6 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { motion } from "framer-motion";
+import dynamic from "next/dynamic";
 import {
     MapPin,
     BedDouble,
@@ -15,6 +16,8 @@ import {
     Mail,
     Tag,
 } from "lucide-react";
+
+const PropertyLocationMap = dynamic(() => import("./PropertyLocationMap"), { ssr: false });
 
 interface Property {
     id: string;
@@ -31,6 +34,8 @@ interface Property {
     featured: boolean;
     imageUrl: string | null;
     active: boolean;
+    latitude?: number | null;
+    longitude?: number | null;
 }
 
 function formatPrice(price: number): string {
@@ -196,6 +201,33 @@ export default function PropertyDetailClient({
                                     {property.description}
                                 </div>
                             </motion.div>
+
+                            {/* Location Map */}
+                            {property.latitude && property.longitude && (
+                                <motion.div
+                                    initial={{ opacity: 0, y: 20 }}
+                                    animate={{ opacity: 1, y: 0 }}
+                                    transition={{ delay: 0.3 }}
+                                    className="bg-white rounded-2xl shadow-md overflow-hidden"
+                                >
+                                    <div className="p-6 md:p-8 pb-4">
+                                        <h2 className="text-xl font-heading text-primary mb-1">Location</h2>
+                                        <p className="text-text-secondary text-sm flex items-center gap-1.5">
+                                            <MapPin size={14} className="text-accent" />
+                                            {property.location}
+                                        </p>
+                                    </div>
+                                    <div className="h-[400px] w-full">
+                                        <PropertyLocationMap
+                                            latitude={property.latitude}
+                                            longitude={property.longitude}
+                                            title={property.title}
+                                            price={property.price}
+                                            transaction={property.transaction}
+                                        />
+                                    </div>
+                                </motion.div>
+                            )}
                         </div>
 
                         {/* Sidebar */}

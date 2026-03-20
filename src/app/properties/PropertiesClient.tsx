@@ -86,6 +86,8 @@ export default function PropertiesClient({
     const [showMoreFilters, setShowMoreFilters] = useState(false);
     const [showMap, setShowMap] = useState(true);
     const [mapFocus, setMapFocus] = useState<{ lat: number; lng: number } | null>(null);
+    const [hoveredPropertyId, setHoveredPropertyId] = useState<string | null>(null);
+    const [searchBounds, setSearchBounds] = useState<{ ne: { lat: number; lng: number }; sw: { lat: number; lng: number } } | null>(null);
 
     const pushFilters = useCallback((overrides: Record<string, string>) => {
         const params = new URLSearchParams(searchParams.toString());
@@ -127,6 +129,8 @@ export default function PropertiesClient({
         setFilterBaths("any");
         setSortBy("newest");
         setShowMoreFilters(false);
+        setSearchBounds(null);
+        setMapFocus(null);
         router.push("/properties");
     }
 
@@ -187,7 +191,21 @@ export default function PropertiesClient({
                                 value={filterCounty}
                                 onChange={(val) => { setFilterCounty(val); }}
                                 onLocationSelect={(coords) => {
-                                    setMapFocus({ lat: coords.lat, lng: coords.lng });
+                                    if (coords.bounds) {
+                                        setSearchBounds(coords.bounds);
+                                        setMapFocus(null);
+                                        // Push bounds to URL for server-side geo filtering
+                                        pushFilters({
+                                            county: filterCounty,
+                                            neLat: String(coords.bounds.ne.lat),
+                                            neLng: String(coords.bounds.ne.lng),
+                                            swLat: String(coords.bounds.sw.lat),
+                                            swLng: String(coords.bounds.sw.lng),
+                                        });
+                                    } else {
+                                        setMapFocus({ lat: coords.lat, lng: coords.lng });
+                                        setSearchBounds(null);
+                                    }
                                     if (!showMap) setShowMap(true);
                                 }}
                                 placeholder="Search by county, area, or ward..."
@@ -443,22 +461,34 @@ export default function PropertiesClient({
                 </div>
             </section>
 
-            {/* Main Content: Map + List Split View */}
-            <div className={`flex flex-col lg:flex-row ${showMap ? "lg:h-[800px]" : ""}`}>
-                {/* Map Section — sticky while list scrolls */}
+            {/* Main Content: Zillow-style — Map LEFT, Cards RIGHT */}
+            <div className={`flex flex-col ${showMap ? "lg:flex-row lg:h-[calc(100vh-200px)]" : ""}`}>
+                {/* Map Section — sticky full height */}
                 {showMap && (
-                    <motion.div
-                        initial={{ opacity: 0, x: -50 }}
-                        animate={{ opacity: 1, x: 0 }}
-                        className="w-full lg:w-1/2 lg:sticky lg:top-0 z-10"
-                        style={{ height: showMap ? "50vw" : undefined, minHeight: "360px", maxHeight: "800px" }}
+                    <div
+                        className="w-full lg:w-[55%] lg:sticky lg:top-0 z-10 h-[350px] lg:h-full"
                     >
-                        <PropertiesMap properties={properties} focusLocation={mapFocus} />
-                    </motion.div>
+                        <PropertiesMap
+                            properties={properties}
+                            focusLocation={mapFocus}
+                            hoveredPropertyId={hoveredPropertyId}
+                            searchBounds={searchBounds}
+                            onPropertyHover={setHoveredPropertyId}
+                            onSearchArea={(bounds) => {
+                                setSearchBounds(bounds);
+                                pushFilters({
+                                    neLat: String(bounds.ne.lat),
+                                    neLng: String(bounds.ne.lng),
+                                    swLat: String(bounds.sw.lat),
+                                    swLng: String(bounds.sw.lng),
+                                });
+                            }}
+                        />
+                    </div>
                 )}
 
-                {/* List Section */}
-                <div className={`flex-1 overflow-y-auto bg-surface py-8 px-4 md:px-8 ${showMap ? "w-full" : "section-container py-16"}`}>
+                {/* List Section — scrollable */}
+                <div className={`flex-1 overflow-y-auto bg-surface py-6 px-4 md:px-6 ${showMap ? "" : "section-container py-16"}`}>
                     <div className={!showMap ? "section-container" : ""}>
                         {properties.length > 0 ? (
                             <div className={`grid gap-6 ${
@@ -474,12 +504,14 @@ export default function PropertiesClient({
                                         initial={{ opacity: 0, y: 20 }}
                                         animate={{ opacity: 1, y: 0 }}
                                         transition={{ delay: i * 0.05, duration: 0.4 }}
+                                        onMouseEnter={() => setHoveredPropertyId(property.id)}
+                                        onMouseLeave={() => setHoveredPropertyId(null)}
                                     >
-                                        <Link 
-                                            href={`/properties/${property.id}`} 
-                                            className={`block group bg-white rounded-2xl overflow-hidden shadow-md hover:shadow-2xl transition-all duration-500 hover:-translate-y-2 ${
+                                        <Link
+                                            href={`/properties/${property.id}`}
+                                            className={`block group bg-white rounded-2xl overflow-hidden shadow-md hover:shadow-2xl transition-all duration-300 hover:-translate-y-1 ${
                                                 viewMode === "list" ? "flex flex-col md:flex-row h-full md:h-64" : ""
-                                            }`}
+                                            } ${hoveredPropertyId === property.id ? "ring-2 ring-accent shadow-xl -translate-y-1" : ""}`}
                                         >
                                             <div className={`relative bg-gradient-to-br from-primary/20 to-accent/20 overflow-hidden flex-shrink-0 ${
                                                 viewMode === "list" ? "w-full md:w-64 h-48 md:h-full" : "h-60"

@@ -26,12 +26,16 @@ interface Props {
         baths?: string;
         sort?: string;
         page?: string;
+        neLat?: string;
+        neLng?: string;
+        swLat?: string;
+        swLng?: string;
     }>;
 }
 
 export default async function PropertiesPage({ searchParams }: Props) {
     const params = await searchParams;
-    const { q, transaction, type, category, county, priceMin, priceMax, beds, baths, sort } = params;
+    const { q, transaction, type, category, county, priceMin, priceMax, beds, baths, sort, neLat, neLng, swLat, swLng } = params;
     const page = Math.max(1, parseInt(params.page || "1", 10) || 1);
 
     // Build Prisma where clause from search params
@@ -50,11 +54,19 @@ export default async function PropertiesPage({ searchParams }: Props) {
     }
 
     if (county) {
+        // Split search terms so "Karen Nairobi" matches properties in Karen OR Nairobi
+        const terms = county.split(/[\s,]+/).filter(Boolean);
+        const locationConditions: Prisma.PropertyWhereInput[] = [];
+        for (const term of terms) {
+            locationConditions.push(
+                { county: { contains: term, mode: "insensitive" } },
+                { subcounty: { contains: term, mode: "insensitive" } },
+                { ward: { contains: term, mode: "insensitive" } },
+                { location: { contains: term, mode: "insensitive" } },
+            );
+        }
         where.OR = where.OR || [];
-        (where.OR as Prisma.PropertyWhereInput[]).push(
-            { county: { contains: county } },
-            { location: { contains: county } },
-        );
+        (where.OR as Prisma.PropertyWhereInput[]).push(...locationConditions);
     }
 
     if (priceMin) {
@@ -71,13 +83,25 @@ export default async function PropertiesPage({ searchParams }: Props) {
         where.bathrooms = { gte: Number(baths) };
     }
 
+    // Bounding box geo filter — only return properties within map viewport
+    if (neLat && neLng && swLat && swLng) {
+        const ne = { lat: parseFloat(neLat), lng: parseFloat(neLng) };
+        const sw = { lat: parseFloat(swLat), lng: parseFloat(swLng) };
+        if (!isNaN(ne.lat) && !isNaN(ne.lng) && !isNaN(sw.lat) && !isNaN(sw.lng)) {
+            where.latitude = { gte: sw.lat, lte: ne.lat };
+            where.longitude = { gte: sw.lng, lte: ne.lng };
+        }
+    }
+
     if (q) {
         const searchConditions: Prisma.PropertyWhereInput[] = [
-            { title: { contains: q } },
-            { location: { contains: q } },
-            { description: { contains: q } },
-            { type: { contains: q } },
-            { county: { contains: q } },
+            { title: { contains: q, mode: "insensitive" } },
+            { location: { contains: q, mode: "insensitive" } },
+            { description: { contains: q, mode: "insensitive" } },
+            { type: { contains: q, mode: "insensitive" } },
+            { county: { contains: q, mode: "insensitive" } },
+            { subcounty: { contains: q, mode: "insensitive" } },
+            { ward: { contains: q, mode: "insensitive" } },
         ];
         if (where.OR) {
             where.AND = [{ OR: where.OR as Prisma.PropertyWhereInput[] }, { OR: searchConditions }];

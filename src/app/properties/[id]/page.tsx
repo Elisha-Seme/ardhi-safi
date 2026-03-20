@@ -58,5 +58,14 @@ export default async function PropertyDetailPage({ params }: Props) {
         return bScore - aScore;
     });
 
-    return <PropertyDetailClient property={property} similarProperties={sorted} />;
+    return (
+        <PropertyDetailClient
+            property={{
+                ...property,
+                latitude: property.latitude,
+                longitude: property.longitude,
+            }}
+            similarProperties={sorted}
+        />
+    );
 }

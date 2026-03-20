@@ -7,8 +7,13 @@ import { APIProvider, useMapsLibrary } from "@vis.gl/react-google-maps";
 interface LocationSearchProps {
     value: string;
     onChange: (value: string, meta?: { county?: string; subCounty?: string; ward?: string }) => void;
-    /** Fires with lat/lng when a place is selected from autocomplete */
-    onLocationSelect?: (coords: { lat: number; lng: number; label: string }) => void;
+    /** Fires with lat/lng and viewport bounds when a place is selected from autocomplete */
+    onLocationSelect?: (coords: {
+        lat: number;
+        lng: number;
+        label: string;
+        bounds?: { ne: { lat: number; lng: number }; sw: { lat: number; lng: number } };
+    }) => void;
     placeholder?: string;
     className?: string;
     variant?: "light" | "dark";
@@ -94,13 +99,23 @@ function LocationSearchInner({
         onChange(r.label);
         setOpen(false);
         setActiveIndex(-1);
-        // Geocode to get coordinates for map centering
+        // Geocode to get coordinates + viewport bounds for map
         if (onLocationSelect) {
             const geocoder = new google.maps.Geocoder();
             geocoder.geocode({ placeId: r.id }).then((resp) => {
                 if (resp.results[0]) {
-                    const loc = resp.results[0].geometry.location;
-                    onLocationSelect({ lat: loc.lat(), lng: loc.lng(), label: r.label });
+                    const geo = resp.results[0].geometry;
+                    const loc = geo.location;
+                    const viewport = geo.viewport;
+                    onLocationSelect({
+                        lat: loc.lat(),
+                        lng: loc.lng(),
+                        label: r.label,
+                        bounds: viewport ? {
+                            ne: { lat: viewport.getNorthEast().lat(), lng: viewport.getNorthEast().lng() },
+                            sw: { lat: viewport.getSouthWest().lat(), lng: viewport.getSouthWest().lng() },
+                        } : undefined,
+                    });
                 }
             }).catch(() => {});
         }
